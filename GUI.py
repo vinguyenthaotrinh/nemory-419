@@ -5,7 +5,9 @@ dpg.create_context()
 
 with dpg.font_registry():
     # Tải font từ file
-    header = dpg.add_font("font/LithosPro-Regular.otf",40)  # Thay đổi đường dẫn và kích thước font
+    header = dpg.add_font("font/LithosPro-Regular.otf",40)  
+    buttonFont = dpg.add_font("font/LithosPro-Regular.otf",13)  
+
 
 
 def genre_menu_callback(sender, app_data, user_data):
@@ -30,20 +32,23 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     dpg.draw_text((400, 20), "NEMORY", color=(255, 255, 255, 255), size=40, tag="custom_text")
     dpg.bind_item_font("custom_text", header)
     
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(230, 80)):  # Dàn hàng ngang và cách 20 pixel
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(210, 80)):  # Dàn hàng ngang và cách 20 pixel
             for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
                 btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+                dpg.bind_item_font(btn, buttonFont)
                 dpg.bind_item_theme(btn, transparent_button_theme)  # Áp dụng theme
 
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(260, 110)):  # Dàn hàng ngang và cách 20 pixel
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(220, 110)):  # Dàn hàng ngang và cách 20 pixel
             for genre in ["Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery"]:
                 btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
-                dpg.bind_item_theme(btn, transparent_button_theme)  # Áp dụng theme
+                dpg.bind_item_font(btn, buttonFont)
+                dpg.bind_item_theme(btn, transparent_button_theme)  
 
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(300, 140)):  # Dàn hàng ngang và cách 20 pixel
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(260, 140)):  # Dàn hàng ngang và cách 20 pixel
             for genre in ["History", "War", "Music", "Documentary", "Foreign", "Tv movie"]:
                 btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
-                dpg.bind_item_theme(btn, transparent_button_theme)  # Áp dụng theme
+                dpg.bind_item_font(btn, buttonFont)
+                dpg.bind_item_theme(btn, transparent_button_theme) 
 
     button_search = dpg.add_button(label="Search!", pos=(150, 120), callback=lambda: print("Button clicked!"))
 
