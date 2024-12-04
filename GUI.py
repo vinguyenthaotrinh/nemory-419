@@ -3,75 +3,73 @@ import find_by_genre as fbg
 import all_field as search
 import json
 
+movies_data = fbg.load_json("dataset/movies.json")
 
 # Tạo context cho Dear PyGUI
 dpg.create_context()
 
+
 def genre_menu_callback(sender, app_data, user_data):
     genre = user_data
     movies = fbg.find_top_movies_by_genre(genre.lower())  # Gọi hàm lấy danh sách phim
+
     dpg.delete_item("results_list", children_only=True)  # Xóa kết quả cũ
     
     if movies:
         for movie in movies:
-            dpg.add_text(f"{movie['title']}      {movie['vote_average']}", parent="results_list")  # Chỉ hiển thị tên phim
+            movietext1 = dpg.add_text(f"{movie['title']}      {movie['vote_average']}", parent="results_list")  # Chỉ hiển thị tên phim
+            dpg.bind_item_font(movietext1, movieText)
+
     else:
         dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="results_list")
 
 def search_movies(sender, app_data, user_data):
-        # Lấy nội dung tìm kiếm từ ô input
+    # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput")
-    
+    print(user_query)
     if not user_query.strip():
         print("Please enter a search query.")
         return
 
     # Gọi hàm search và nhận kết quả
-    top_movies = search(user_query)
+    top_movies = search.search(user_query)
 
-    # Hiển thị kết quả lên giao diện
-    with dpg.window(label="Search Results", width=600, height=400, pos=(270, 350), tag="SearchResults"):
-        if top_movies.empty:
+    dpg.delete_item("results_list", children_only=True)  # Xóa kết quả cũ
+
+    # Create a container for search results
+    with dpg.group(tag="SearchResults", parent="results_list"):
+        if top_movies is None:
             dpg.add_text("No results found.")
         else:
             for _, row in top_movies.iterrows():
-                # Thêm thông tin phim vào giao diện
-                dpg.add_text(f"Title: {row['title']}")
-                dpg.add_text(f"Overview: {row['overview']}")
-                dpg.add_text(f"Release Date: {row['release_date']}")
-
-                try:
-                    keywords_data = json.loads(row['keywords']) if row['keywords'] else []
-                    keyword_names = [keyword['name'] for keyword in keywords_data]
-                    dpg.add_text(f"Keywords: {', '.join(keyword_names) if keyword_names else 'None'}")
-                except json.JSONDecodeError:
-                    dpg.add_text("Keywords: Invalid format")
-                
+                titletext = dpg.add_text(f"Title: {row['title']}")
+                dpg.bind_item_font(titletext, movieText)
                 try:
                     genres_data = json.loads(row['genres']) if row['genres'] else []
                     genre_names = [genre['name'] for genre in genres_data]
-                    dpg.add_text(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
+                    gennrestext = dpg.add_text(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
+                    dpg.bind_item_font(gennrestext, movieText)
                 except json.JSONDecodeError:
                     dpg.add_text("Genres: Invalid format")
-                
-                try:
-                    cast_data = json.loads(row['cast']) if row['cast'] else []
-                    cast_names = [cast['name'] for cast in cast_data[:5]]  # Top 5 diễn viên
-                    dpg.add_text(f"Cast: {', '.join(cast_names) if cast_names else 'None'}")
-                except json.JSONDecodeError:
-                    dpg.add_text("Cast: Invalid format")
+                dpg.add_separator()  
 
-                dpg.add_separator()
-    
+with dpg.theme() as child_window_theme:
+    with dpg.theme_component(dpg.mvChildWindow):
+        dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (100,102,155,200))  
+        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (100, 100, 150, 255))  
+        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, (150, 150, 200, 255))  
 
 with dpg.font_registry():
     # Tải font từ file
     header = dpg.add_font("font/LithosPro-Regular.otf",40)  
-    buttonFont = dpg.add_font("font/LithosPro-Regular.otf",13) 
+    buttonFont = dpg.add_font("font/LithosPro-Black.otf",13) 
     title = dpg.add_font("font/MAIAN.TTF",20)
+    movieText = dpg.add_font("font/MAIAN.TTF",15)
 
 with dpg.theme() as input_theme:
-    with dpg.theme_component(dpg.mvInputText):  # Áp dụng cho tất cả InputText
+    with dpg.theme_component(dpg.mvInputText):  
+        dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255, 255))  
+        dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, (150, 150, 150, 255)) 
         dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (100,102,155,200))
 
 with dpg.texture_registry():
@@ -115,27 +113,20 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme) 
 
-    # # Khu vực hiển thị kết quả
-    # dpg.add_text("Kết quả tìm kiếm:", pos=(150, 200))
-    # with dpg.group(tag="results_list", pos=(150, 230)):
-    #     pass  # Đây là nơi thêm kết quả
-
 # Tạo viewport
 
     dpg.add_input_text(tag="SearchInput", hint="Input here...", pos=(270,290), width=480, height=40, multiline=True)
     dpg.bind_item_theme("SearchInput", input_theme)
+    dpg.bind_item_font("SearchInput", title)
 
     button_search = dpg.add_button(label="Search!", pos=(760, 300), callback=search_movies)
     dpg.bind_item_theme(button_search, transparent_button_theme)
     dpg.bind_item_font(button_search, title)
 
-    
-        #dpg.add_spacing(count=2)        
-        #dpg.add_spacing(count=2)
-        #dpg.add_button(label="Tìm kiếm")
-        #dpg.add_spacing(count=2)
-        #dpg.add_text("Kết quả tìm kiếm:")
-        #dpg.add_input_text(tag="Kết quả tìm kiếm", multiline=True, readonly=True, width=600, height=300)
+    with dpg.child_window(tag="results_list", width=480, height=220, pos=(270, 360)):
+        dpg.add_text("Results will appear here.")  # Placeholder ban đầu
+    dpg.bind_item_theme("results_list", child_window_theme)
+
 
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)
