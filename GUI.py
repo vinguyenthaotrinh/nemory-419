@@ -15,7 +15,7 @@ def genre_menu_callback(sender, app_data, user_data):
     
     if movies:
         for movie in movies:
-            dpg.add_text(f"{movie['title']}", parent="results_list")  # Chỉ hiển thị tên phim
+            dpg.add_text(f"{movie['title']}      {movie['vote_average']}", parent="results_list")  # Chỉ hiển thị tên phim
     else:
         dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="results_list")
 
