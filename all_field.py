@@ -4,11 +4,13 @@ from sklearn.metrics.pairwise import cosine_similarity
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+import json
 
 # Ensure nltk packages are downloaded
 nltk.download('stopwords')
 nltk.download('wordnet')
-nltk.download('punkt')  # Required for tokenization
+nltk.download('punkt')
+nltk.download('punkt_tab')
 
 # Initialize the lemmatizer
 lemmatizer = WordNetLemmatizer()
@@ -27,7 +29,7 @@ movies_df = pd.read_csv("dataset/tmdb_5000_movies.csv")
 merged_df = pd.merge(movies_df, credits_df, left_on='id', right_on='movie_id', how='inner')
 
 # Drop unnecessary columns
-merged_df = merged_df.drop(columns=['original_title', 'homepage'])  # Remove less relevant columns
+merged_df = merged_df.drop(columns=['original_title'])  # Remove less relevant columns
 
 # Rename columns for consistency
 merged_df = merged_df.rename(columns={'title_x': 'title'})  # Assuming 'title_x' is from movies_df
@@ -39,7 +41,21 @@ merged_df['combined_features'] = (
     merged_df['keywords'].fillna('') + ' ' +
     merged_df['cast'].fillna('') + ' ' +
     merged_df['crew'].fillna('') + ' ' +
-    merged_df['production_companies'].fillna('')
+    merged_df['production_companies'].fillna('') + ' ' +
+    merged_df['production_countries'].fillna('') + ' ' +
+    merged_df['spoken_languages'].fillna('') + ' ' +
+    merged_df['tagline'].fillna('') + ' ' +
+    merged_df['title'].fillna('') + ' ' +
+    merged_df['release_date'].fillna('') + ' ' +
+    merged_df['popularity'].fillna(0).astype(str) + ' ' +
+    merged_df['vote_average'].fillna(0).astype(str) + ' ' +
+    merged_df['vote_count'].fillna(0).astype(str) + ' ' +
+    merged_df['budget'].fillna(0).astype(str) + ' ' +
+    merged_df['revenue'].fillna(0).astype(str) + ' ' +
+    merged_df['runtime'].fillna(0).astype(str) + ' ' +
+    merged_df['status'].fillna('') + ' ' +
+    merged_df['homepage'].fillna('').astype(str) + ' ' +
+    merged_df['original_language'].fillna('')
 )
 
 # Apply lemmatization to the combined features
@@ -69,15 +85,50 @@ def search():
 
     # Display top 10 results
     top_movies = filtered_results.head(10)
+    # if not top_movies.empty:
+    #     print(f"Found {len(top_movies)} result(s):")
+    #     for _, row in top_movies.iterrows():
+    #         print(f"Title: {row['title']}")
+    #         print(f"Overview: {row['overview']}")
+    #         print(f"Release Date: {row['release_date']}")
+    #         print(f"Keywords: {row['keywords']}")
+    #         print(f"Genres: {row['genres']}")
+    #         print(f"Cast: {row['cast']}")
+    #         print("-" * 50)
+    # else:
+    #     print("No results found that match your query.")
+
     if not top_movies.empty:
         print(f"Found {len(top_movies)} result(s):")
         for _, row in top_movies.iterrows():
             print(f"Title: {row['title']}")
             print(f"Overview: {row['overview']}")
             print(f"Release Date: {row['release_date']}")
-            print(f"Keywords: {row['keywords']}")
-            print(f"Genres: {row['genres']}")
-            print(f"Cast: {row['cast']}")
+            
+            # Extract and print keyword names
+            try:
+                keywords_data = json.loads(row['keywords']) if row['keywords'] else []
+                keyword_names = [keyword['name'] for keyword in keywords_data]
+                print(f"Keywords: {', '.join(keyword_names) if keyword_names else 'None'}")
+            except json.JSONDecodeError:
+                print("Keywords: Invalid format")
+            
+            # Extract and print genre names
+            try:
+                genres_data = json.loads(row['genres']) if row['genres'] else []
+                genre_names = [genre['name'] for genre in genres_data]
+                print(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
+            except json.JSONDecodeError:
+                print("Genres: Invalid format")
+            
+            # Extract and print cast names
+            try:
+                cast_data = json.loads(row['cast']) if row['cast'] else []
+                cast_names = [cast['name'] for cast in cast_data[:5]]  # Limit to top 5 cast members
+                print(f"Cast: {', '.join(cast_names) if cast_names else 'None'}")
+            except json.JSONDecodeError:
+                print("Cast: Invalid format")
+            
             print("-" * 50)
     else:
         print("No results found that match your query.")
