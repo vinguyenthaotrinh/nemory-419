@@ -39,23 +39,23 @@ merged_df['combined_features'] = (
     merged_df['overview'].fillna('') + ' ' +
     merged_df['genres'].fillna('') + ' ' +
     merged_df['keywords'].fillna('') + ' ' +
-    merged_df['cast'].fillna('') + ' ' +
-    merged_df['crew'].fillna('') + ' ' +
-    merged_df['production_companies'].fillna('') + ' ' +
-    merged_df['production_countries'].fillna('') + ' ' +
-    merged_df['spoken_languages'].fillna('') + ' ' +
-    merged_df['tagline'].fillna('') + ' ' +
-    merged_df['title'].fillna('') + ' ' +
-    merged_df['release_date'].fillna('') + ' ' +
-    merged_df['popularity'].fillna(0).astype(str) + ' ' +
-    merged_df['vote_average'].fillna(0).astype(str) + ' ' +
-    merged_df['vote_count'].fillna(0).astype(str) + ' ' +
-    merged_df['budget'].fillna(0).astype(str) + ' ' +
-    merged_df['revenue'].fillna(0).astype(str) + ' ' +
-    merged_df['runtime'].fillna(0).astype(str) + ' ' +
-    merged_df['status'].fillna('') + ' ' +
-    merged_df['homepage'].fillna('').astype(str) + ' ' +
-    merged_df['original_language'].fillna('')
+    merged_df['cast'].fillna('') + ' ' 
+    # merged_df['crew'].fillna('') + ' ' +
+    # merged_df['production_companies'].fillna('') + ' ' +
+    # merged_df['production_countries'].fillna('') + ' ' +
+    # merged_df['spoken_languages'].fillna('') + ' ' +
+    # merged_df['tagline'].fillna('') + ' ' +
+    # merged_df['title'].fillna('') + ' ' +
+    # merged_df['release_date'].fillna('') + ' ' +
+    # merged_df['popularity'].fillna(0).astype(str) + ' ' +
+    # merged_df['vote_average'].fillna(0).astype(str) + ' ' +
+    # merged_df['vote_count'].fillna(0).astype(str) + ' ' +
+    # merged_df['budget'].fillna(0).astype(str) + ' ' +
+    # merged_df['revenue'].fillna(0).astype(str) + ' ' +
+    # merged_df['runtime'].fillna(0).astype(str) + ' ' +
+    # merged_df['status'].fillna('') + ' ' +
+    # merged_df['homepage'].fillna('').astype(str) + ' ' +
+    # merged_df['original_language'].fillna('')
 )
 
 # Apply lemmatization to the combined features
@@ -71,8 +71,7 @@ def preprocess_query(query):
     return lemmatize_text(query)
 
 # Search function
-def search():
-    user_query = input("Enter your search query: ")
+def search(user_query):
     processed_query = preprocess_query(user_query)
     user_vector = vectorizer.transform([processed_query])
     similarity_scores = cosine_similarity(user_vector, tfidf_matrix)
@@ -85,18 +84,7 @@ def search():
 
     # Display top 10 results
     top_movies = filtered_results.head(10)
-    # if not top_movies.empty:
-    #     print(f"Found {len(top_movies)} result(s):")
-    #     for _, row in top_movies.iterrows():
-    #         print(f"Title: {row['title']}")
-    #         print(f"Overview: {row['overview']}")
-    #         print(f"Release Date: {row['release_date']}")
-    #         print(f"Keywords: {row['keywords']}")
-    #         print(f"Genres: {row['genres']}")
-    #         print(f"Cast: {row['cast']}")
-    #         print("-" * 50)
-    # else:
-    #     print("No results found that match your query.")
+    
 
     if not top_movies.empty:
         print(f"Found {len(top_movies)} result(s):")
@@ -135,4 +123,5 @@ def search():
 
 # Run the search function
 if __name__ == '__main__':
-    search()
+    user_query = input("Enter: ")
+    search(user_query)
