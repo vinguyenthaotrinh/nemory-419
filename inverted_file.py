@@ -39,7 +39,7 @@ for movie_id, movie_data in movies_dict.items():
             character = cast_entry.get("character")
             if cast_id is not None and name and character:
                 # Create the composite key for cast
-                cast_key = f"{name} - {cast_id}"
+                cast_key = name.lower()
                 # Check if an entry for the same composite key and movie_id exists; if not, add it
                 if not any(
                     entry['movie_id'] == movie_id and entry['character'] == character
@@ -61,8 +61,9 @@ for movie_id, movie_data in movies_dict.items():
             job = crew_member.get("job")
             if name and crew_id is not None and gender is not None:
                 # Create the composite key for crew
-                crew_key = f"{name} - {crew_id} - {gender}"
+                crew_key = name.lower()
                 inverted_index["crew"][crew_key].append({
+                    "gender": gender,
                     "movie_id": movie_id,
                     "department": department,
                     "job": job
