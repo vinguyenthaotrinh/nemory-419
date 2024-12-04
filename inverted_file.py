@@ -1,11 +1,11 @@
 import json
 from collections import defaultdict
 
-# Assuming movies_dict is already loaded from movies_data.json
+# Load the movies dictionary from the JSON file
 with open('dataset/movies.json', 'r', encoding='utf-8') as file:
     movies_dict = json.load(file)
 
-# Initialize dictionaries to store inverted indices for each field
+# Initialize the inverted index dictionaries
 inverted_index = {
     "genres": defaultdict(list),
     "keywords": defaultdict(list),
@@ -18,24 +18,59 @@ inverted_index = {
 
 # Populate the inverted index dictionaries
 for movie_id, movie_data in movies_dict.items():
-    # Convert string fields to lists if needed (e.g., JSON-like strings)
-    for field in ["genres", "keywords", "production_companies", "production_countries", "spoken_languages", "cast", "crew"]:
-        # Parse JSON strings to lists
+    # Process 'genres', 'keywords', 'production_companies', 'production_countries', and 'spoken_languages' fields
+    for field in ["genres", "keywords", "production_companies", "production_countries", "spoken_languages"]:
         if movie_data[field]:
             items = json.loads(movie_data[field])
             for item in items:
                 if isinstance(item, dict):
-                    # If the item has an 'id' and 'name' key, use 'name' as key
-                    key = item.get("name")
+                    key = item.get("name").lower()
                     if key:
                         inverted_index[field][key].append(movie_id)
                 else:
-                    # If it's a simple value, use it directly
                     inverted_index[field][item].append(movie_id)
+
+    # Process 'cast' field
+    if movie_data["cast"]:
+        cast_list = json.loads(movie_data["cast"])
+        for cast_entry in cast_list:
+            cast_id = cast_entry.get("id")
+            name = cast_entry.get("name")
+            character = cast_entry.get("character")
+            if cast_id is not None and name and character:
+                # Create the composite key for cast
+                cast_key = f"{name} - {cast_id}"
+                # Check if an entry for the same composite key and movie_id exists; if not, add it
+                if not any(
+                    entry['movie_id'] == movie_id and entry['character'] == character
+                    for entry in inverted_index["cast"][cast_key]
+                ):
+                    inverted_index["cast"][cast_key].append({
+                        "movie_id": movie_id,
+                        "character": character
+                    })
+
+    # Process 'crew' field
+    if movie_data["crew"]:
+        crew_list = json.loads(movie_data["crew"])
+        for crew_member in crew_list:
+            name = crew_member.get("name")
+            crew_id = crew_member.get("id")
+            gender = crew_member.get("gender")
+            department = crew_member.get("department")
+            job = crew_member.get("job")
+            if name and crew_id is not None and gender is not None:
+                # Create the composite key for crew
+                crew_key = f"{name} - {crew_id} - {gender}"
+                inverted_index["crew"][crew_key].append({
+                    "movie_id": movie_id,
+                    "department": department,
+                    "job": job
+                })
 
 # Save each inverted index to a JSON file
 for field, index in inverted_index.items():
-    with open(f"{field}_inverted.json", 'w', encoding='utf-8') as file:
+    with open(f"dataset/{field}_inverted.json", 'w', encoding='utf-8') as file:
         json.dump(index, file, ensure_ascii=False, indent=4)
 
 print("Inverted files have been created and saved.")
