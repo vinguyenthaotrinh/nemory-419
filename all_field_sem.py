@@ -2,6 +2,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import json
+import pickle
 
 # Load the pre-trained model
 model = SentenceTransformer('all-MiniLM-L6-v2')  
@@ -33,9 +34,27 @@ merged_df['combined_features'] = (
     merged_df['title'].fillna('')
 )
 
-# Generate embeddings for the movie features
-print("Encoding movie features...")
-merged_df['embedding'] = list(model.encode(merged_df['combined_features'].tolist(), show_progress_bar=True))
+# Function to save embeddings
+def save_embeddings():
+    print("Encoding movie features...")
+    merged_df['embedding'] = list(model.encode(merged_df['combined_features'].tolist(), show_progress_bar=True))
+    # Save embeddings and DataFrame to a file
+    with open("movie_embeddings.pkl", "wb") as f:
+        pickle.dump(merged_df[['title', 'overview', 'release_date', 'keywords', 'genres', 'cast', 'embedding']], f)
+    print("Embeddings saved!")
+
+# Function to load embeddings
+def load_embeddings():
+    global merged_df
+    with open("movie_embeddings.pkl", "rb") as f:
+        merged_df = pickle.load(f)
+    print("Embeddings loaded!")
+
+# Check if embeddings file exists, otherwise create it
+try:
+    load_embeddings()
+except FileNotFoundError:
+    save_embeddings()
 
 # Search function using Sentence Transformers
 def search():
