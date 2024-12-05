@@ -24,6 +24,9 @@ def genre_menu_callback(sender, app_data, user_data):
 
     dpg.delete_item("Genresults_list", children_only=True)  # Xóa kết quả cũ
 
+    if dpg.does_item_exist("GenreTextureRegistry"):
+        dpg.delete_item("GenreTextureRegistry")
+
     if movies:
         with dpg.texture_registry(tag="GenreTextureRegistry") as reg_id:
             for movie in movies:
