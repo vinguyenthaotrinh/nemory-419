@@ -5,23 +5,28 @@ import json
 
 movies_data = fbg.load_json("dataset/movies.json")
 
-# Tạo context cho Dear PyGUI
 dpg.create_context()
 
+def switch_ui(hide_ui, show_ui):
+    dpg.hide_item(hide_ui)  
+    dpg.show_item(show_ui)  
 
 def genre_menu_callback(sender, app_data, user_data):
     genre = user_data
     movies = fbg.find_top_movies_by_genre(genre.lower())  # Gọi hàm lấy danh sách phim
 
-    dpg.delete_item("results_list", children_only=True)  # Xóa kết quả cũ
+    dpg.delete_item("Genresults_list", children_only=True)  # Xóa kết quả cũ
     
     if movies:
         for movie in movies:
-            movietext1 = dpg.add_text(f"{movie['title']}      {movie['vote_average']}", parent="results_list")  # Chỉ hiển thị tên phim
+            # width2, height2, channels2, data2 = dpg.load_image("asset/Homepage.png")
+            # texture_id2 = dpg.add_static_texture(width2, height2, data2)
+            movietext1 = dpg.add_text(f"{movie['title']}      {movie['vote_average']}", parent="Genresults_list")  # Chỉ hiển thị tên phim
             dpg.bind_item_font(movietext1, movieText)
 
     else:
-        dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="results_list")
+        dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="Genresults_list")
+    switch_ui("Primary Window", "Genre UI") 
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -75,6 +80,8 @@ with dpg.theme() as input_theme:
 with dpg.texture_registry():
     width, height, channels, data = dpg.load_image("asset/Homepage.png")
     texture_id = dpg.add_static_texture(width, height, data)
+    width1, height1, channels1, data1 = dpg.load_image("asset/bgExtra.png")
+    bgExtra = dpg.add_static_texture(width1, height1, data1)
 
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
@@ -89,25 +96,19 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 
     dpg.draw_text((260, 220), "No matter what you remember about the movie, \nyou can use it to search.", color=(255, 255, 255, 255), size=20, tag="header1")
     dpg.bind_item_font("header1", title)
-    
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(210, 80)):  # Dàn hàng ngang và cách 20 pixel
-            for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
-                btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
-                dpg.bind_item_font(btn, buttonFont)
-                dpg.bind_item_theme(btn, transparent_button_theme)  # Áp dụng theme
 
     with dpg.group(horizontal=True, horizontal_spacing=20, pos=(210, 80)):
         for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
             btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme)
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(220, 110)):  # Dàn hàng ngang và cách 20 pixel
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(220, 110)):  
         for genre in ["Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery"]:
             btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme)  
 
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(260, 140)):  # Dàn hàng ngang và cách 20 pixel
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(260, 140)): 
         for genre in ["History", "War", "Music", "Documentary", "Foreign", "Tv movie"]:
             btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
             dpg.bind_item_font(btn, buttonFont)
@@ -124,9 +125,37 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     dpg.bind_item_font(button_search, title)
 
     with dpg.child_window(tag="results_list", width=480, height=220, pos=(270, 360)):
-        dpg.add_text("Results will appear here.")  # Placeholder ban đầu
+        dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("results_list", child_window_theme)
 
+with dpg.window(label="Genre", tag="Genre UI", show=False):
+    dpg.add_image(bgExtra)
+    headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Genre UI", "Primary Window"), pos=(50, 60))
+    dpg.bind_item_font(headerGen, header)
+    dpg.bind_item_theme(headerGen, transparent_button_theme)
+
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos=(310, 45)):
+        for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(310, 70)):  
+        for genre in ["Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)  
+
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(310, 95)):  
+        for genre in ["History", "War", "Music", "Documentary", "Foreign", "Tv movie"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme) 
+
+    with dpg.child_window(tag="Genresults_list", width=480, height=220, pos=(270, 360)):
+        dpg.add_text("Results will appear here.") 
+    dpg.bind_item_theme("Genresults_list", child_window_theme)
+
+    #dpg.add_child_window(tag="genre_results", width=600, height=400, pos=(50, 80))  
 
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)

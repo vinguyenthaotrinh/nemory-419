@@ -37,6 +37,7 @@ def get_movies_by_genre(genre, genres_data, movies_data, m, C):
                 wr_score = weighted_rank(vote_average, vote_count, m, C)
                 movies.append({
                     "title": movie_details.get("title", "Unknown"),
+                    "id" : movie_id,
                     "vote_average": vote_average,
                     "vote_count": vote_count,
                     "score": wr_score

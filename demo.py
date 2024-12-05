@@ -1,35 +1,141 @@
+import os
 import dearpygui.dearpygui as dpg
+import find_by_genre as fbg
+import all_field as search
+import json
 
-# Tạo context cho Dear PyGUI
+movies_data = fbg.load_json("dataset/movies.json")
+
 dpg.create_context()
+
+def switch_ui(hide_ui, show_ui):
+    dpg.hide_item(hide_ui)  
+    dpg.show_item(show_ui)  
+
+def genre_menu_callback(sender, app_data, user_data):
+    genre = user_data
+    movies = fbg.find_top_movies_by_genre(genre.lower())  # Get movie list
+
+    if not dpg.does_item_exist("Genresults_list"):
+        print("Error: 'Genresults_list' does not exist!")
+        return
+
+    dpg.delete_item("Genresults_list", children_only=True)  # Clear old results
+
+    if movies:
+        row_counter = 0  # Counter for movies in a row
+        current_row = None  # Initialize current row
+        for movie in movies:
+            # Construct poster path
+            poster_path = f"poster/{movie['id']}.jpg"
+            if os.path.exists(poster_path):
+                try:
+                    width2, height2, channels2, data2 = dpg.load_image(poster_path)
+                    # Create static texture
+                    posterImg = dpg.add_static_texture(width2, height2, data2)
+                    dpg.add_image(poster_path, width2, height2,)
+                except Exception as e:
+                    print(f"Error loading texture for {poster_path}: {e}")
+                    posterImg = None
+            else:
+                print(f"Poster file not found: {poster_path}")
+                posterImg = None
+
+            # Start a new row if needed
+            if row_counter == 0:
+                try:
+                    current_row = dpg.group(horizontal=True, horizontal_spacing=30, parent="Genresults_list")
+                except Exception as e:
+                    print(f"Error creating new row: {e}")
+                    current_row = None
+
+            # Add movie details
+            if current_row:
+                try:
+                    with dpg.group(parent=current_row):
+                        if posterImg:
+                            dpg.add_image(posterImg, width=100, height=150)
+                        title_movie = dpg.add_text(f"{movie['title']}", wrap=120)
+                        dpg.bind_item_font(title_movie, movieText)
+
+                        title_vote = dpg.add_text(f"{movie['vote_average']} ★")
+                        dpg.bind_item_font(title_vote, movieText)
+                except Exception as e:
+                    print(f"Error adding movie details for {movie['title']}: {e}")
+
+            row_counter += 1
+            if row_counter >= 5:  # Reset for a new row
+                row_counter = 0
+    else:
+        dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="Genresults_list")
+
+    switch_ui("Primary Window", "Genre UI")
+
+
+def search_movies(sender, app_data, user_data):
+    # Lấy nội dung tìm kiếm từ ô input
+    user_query = dpg.get_value("SearchInput")
+    print(user_query)
+    if not user_query.strip():
+        print("Please enter a search query.")
+        return
+
+    # Gọi hàm search và nhận kết quả
+    top_movies = search.search(user_query)
+
+    dpg.delete_item("results_list", children_only=True)  # Xóa kết quả cũ
+
+    # Create a container for search results
+    with dpg.group(tag="SearchResults", parent="results_list"):
+        if top_movies is None:
+            dpg.add_text("No results found.")
+        else:
+            for _, row in top_movies.iterrows():
+                titletext = dpg.add_text(f"Title: {row['title']}")
+                dpg.bind_item_font(titletext, movieText)
+                try:
+                    genres_data = json.loads(row['genres']) if row['genres'] else []
+                    genre_names = [genre['name'] for genre in genres_data]
+                    gennrestext = dpg.add_text(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
+                    dpg.bind_item_font(gennrestext, movieText)
+                except json.JSONDecodeError:
+                    dpg.add_text("Genres: Invalid format")
+                dpg.add_separator()  
+
+with dpg.theme() as child_window_theme:
+    with dpg.theme_component(dpg.mvChildWindow):
+        dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (100,102,155,200))  
+        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (100, 100, 150, 255))  
+        dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, (150, 150, 200, 255))  
 
 with dpg.font_registry():
     # Tải font từ file
     header = dpg.add_font("font/LithosPro-Regular.otf",40)  
-    buttonFont = dpg.add_font("font/LithosPro-Regular.otf",13) 
+    buttonFont = dpg.add_font("font/LithosPro-Black.otf",13) 
     title = dpg.add_font("font/MAIAN.TTF",20)
+    movieText = dpg.add_font("font/MAIAN.TTF",15)
 
 with dpg.theme() as input_theme:
-    with dpg.theme_component(dpg.mvInputText):  # Áp dụng cho tất cả InputText
+    with dpg.theme_component(dpg.mvInputText):  
+        dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255, 255))  
+        dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, (150, 150, 150, 255)) 
         dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (100,102,155,200))
-
-def genre_menu_callback(sender, app_data, user_data):
-    print(f"Selected Genre: {user_data}")  # `user_data` chứa tên thể loại
 
 with dpg.texture_registry():
     width, height, channels, data = dpg.load_image("asset/Homepage.png")
     texture_id = dpg.add_static_texture(width, height, data)
+    width1, height1, channels1, data1 = dpg.load_image("asset/bgExtra.png")
+    bgExtra = dpg.add_static_texture(width1, height1, data1)
+
+
 
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
         dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0), category=dpg.mvThemeCat_Core)  # Nền bình thường (trong suốt)
-        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255, 30), category=dpg.mvThemeCat_Core)  # Hover (mờ nhẹ)
-        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255, 50), category=dpg.mvThemeCat_Core)  # Khi nhấn (mờ hơn)
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (255, 255, 255, 30), category=dpg.mvThemeCat_Core)  # Hover
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255, 50), category=dpg.mvThemeCat_Core)  # Khi nhấn
 
-
-# Tạo cửa sổ giao diện chính
 with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
-            
     dpg.add_image(texture_id)
     
     dpg.draw_text((400, 20), "NEMORY", color=(255, 255, 255, 255), size=40, tag="custom_text")
@@ -37,51 +143,71 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 
     dpg.draw_text((260, 220), "No matter what you remember about the movie, \nyou can use it to search.", color=(255, 255, 255, 255), size=20, tag="header1")
     dpg.bind_item_font("header1", title)
-    
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(210, 80)):  # Dàn hàng ngang và cách 20 pixel
-            for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
-                btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
-                dpg.bind_item_font(btn, buttonFont)
-                dpg.bind_item_theme(btn, transparent_button_theme)  # Áp dụng theme
 
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(220, 110)):  # Dàn hàng ngang và cách 20 pixel
-            for genre in ["Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery"]:
-                btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
-                dpg.bind_item_font(btn, buttonFont)
-                dpg.bind_item_theme(btn, transparent_button_theme)  
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos=(210, 80)):
+        for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(220, 110)):  
+        for genre in ["Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)  
 
-    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(260, 140)):  # Dàn hàng ngang và cách 20 pixel
-            for genre in ["History", "War", "Music", "Documentary", "Foreign", "Tv movie"]:
-                btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
-                dpg.bind_item_font(btn, buttonFont)
-                dpg.bind_item_theme(btn, transparent_button_theme) 
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(260, 140)): 
+        for genre in ["History", "War", "Music", "Documentary", "Foreign", "Tv movie"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme) 
 
-    button_search = dpg.add_button(label="Search!", pos=(760, 300), callback=lambda: print("Button clicked!"))
-    dpg.bind_item_theme(button_search, transparent_button_theme)
-    dpg.bind_item_font(button_search, title)
+# Tạo viewport
 
     dpg.add_input_text(tag="SearchInput", hint="Input here...", pos=(270,290), width=480, height=40, multiline=True)
     dpg.bind_item_theme("SearchInput", input_theme)
+    dpg.bind_item_font("SearchInput", title)
 
+    button_search = dpg.add_button(label="Search!", pos=(760, 300), callback=search_movies)
+    dpg.bind_item_theme(button_search, transparent_button_theme)
+    dpg.bind_item_font(button_search, title)
 
-    
-        #dpg.add_spacing(count=2)        
-        #dpg.add_spacing(count=2)
-        #dpg.add_button(label="Tìm kiếm")
-        #dpg.add_spacing(count=2)
-        #dpg.add_text("Kết quả tìm kiếm:")
-        #dpg.add_input_text(tag="Kết quả tìm kiếm", multiline=True, readonly=True, width=600, height=300)
+    with dpg.child_window(tag="results_list", width=480, height=220, pos=(270, 360)):
+        dpg.add_text("Results will appear here.") 
+    dpg.bind_item_theme("results_list", child_window_theme)
+
+with dpg.window(label="Genre", tag="Genre UI", show=False):
+    dpg.add_image(bgExtra)
+    headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Genre UI", "Primary Window"), pos=(50, 60))
+    dpg.bind_item_font(headerGen, header)
+    dpg.bind_item_theme(headerGen, transparent_button_theme)
+
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos=(310, 45)):
+        for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(310, 70)):  
+        for genre in ["Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)  
+
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(310, 95)):  
+        for genre in ["History", "War", "Music", "Documentary", "Foreign", "Tv movie"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme) 
+
+    with dpg.child_window(tag="Genresults_list", width=700, height=600, pos=(270, 360)):
+        dpg.add_text("Results will appear here.") 
+    dpg.bind_item_theme("Genresults_list", child_window_theme)
+
+    #dpg.add_child_window(tag="genre_results", width=600, height=400, pos=(50, 80))  
 
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)
 dpg.setup_dearpygui()
 dpg.show_viewport()
-
-# Đặt cửa sổ chính
 dpg.set_primary_window("Primary Window", True)
-
-# Bắt đầu vòng lặp GUI
 dpg.start_dearpygui()
-
-# Dọn dẹp tài nguyên
 dpg.destroy_context()
