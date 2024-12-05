@@ -36,7 +36,7 @@ def genre_menu_callback(sender, app_data, user_data):
                     texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
                     
                     with dpg.group(parent="Genresults_list", horizontal=False):
-                        dpg.add_image(texture_id, width=100, height=150)  
+                        dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
                         with dpg.group(horizontal=True): 
                             dpg.add_text(f"{movie['title']} ({movie['vote_average']})")
                             dpg.add_text(f"ID: {movie['id']}")
@@ -47,7 +47,35 @@ def genre_menu_callback(sender, app_data, user_data):
 
     switch_ui("Primary Window", "Genre UI")
 
+# Hàm hiển thị giao diện chi tiết phim
+def show_movie_details(sender, app_data, user_data):
+    if not dpg.does_item_exist("DetailUI"):
+        print("Error: Parent container 'DetailUI' does not exist.")
+        return
+    dpg.delete_item("DetailContent", children_only=True)  # Clear everything under DetailUI
+    movie = user_data  # Thông tin phim được truyền qua user_data
+    if dpg.does_item_exist("DetailTextureRegistry"):
+        dpg.delete_item("DetailTextureRegistry")
 
+    try:    
+        with dpg.texture_registry(tag="DetailTextureRegistry") as reg_id:
+            poster_path = f"poster/{movie['id']}.jpg"
+            try:
+                width, height, channels, data = dpg.load_image(poster_path)
+                texture_id = dpg.add_static_texture(width, height, data)
+                with dpg.group(parent="DetailContent", horizontal=False):
+                    dpg.add_image(texture_id, width=200, height=300)
+                    dpg.add_text(f"Title: {movie['title']}", color=(255, 255, 255))
+                    dpg.add_text(f"Release Date: {movie.get('release_date', 'Unknown')}", color=(255, 255, 255))
+                    dpg.add_text(f"Overview: {movie.get('overview', 'No description available.')}", wrap=700, color=(255, 255, 255))
+                    dpg.add_text(f"Rating: {movie.get('vote_average', 'N/A')}", color=(255, 255, 255))
+            except Exception as e:
+                dpg.add_text(f"Poster not available: {e}")
+        
+        # Switch UI after successfully updating details
+    except Exception as e:
+        print(f"Error creating movie details group: {e}")
+    switch_ui("Genre UI", "DetailUI")
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -84,6 +112,7 @@ with dpg.theme() as child_window_theme:
         dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (100,102,155,200))  
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (100, 100, 150, 255))  
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, (150, 150, 200, 255))  
+
 
 with dpg.font_registry():
     # Tải font từ file
@@ -176,6 +205,17 @@ with dpg.window(label="Genre", tag="Genre UI", show=False):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("Genresults_list", child_window_theme)
 
+with dpg.window(label="Movie Details", tag="DetailUI", show=False):
+    dpg.add_image(bgExtra)
+    headerDetail = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("DetailUI", "Primary Window"), pos=(50, 60))        
+    dpg.bind_item_font(headerDetail, header)
+    dpg.bind_item_theme(headerDetail, transparent_button_theme)
+    # with dpg.group(tag="DetailContent", width=480, height=220, pos=(270, 360)):
+    #     dpg.add_text("Movie details will appear here.")
+    with dpg.child_window(tag="DetailContent", width=800, height=600, pos=(100, 150)):
+        dpg.add_text("Results will appear here.") 
+    dpg.bind_item_theme("DetailContent", child_window_theme)
+        
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)
 dpg.setup_dearpygui()
