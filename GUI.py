@@ -67,16 +67,29 @@ def show_movie_details(sender, app_data, user_data):
 
     try:    
         with dpg.texture_registry(tag="DetailTextureRegistry") as reg_id:
-            poster_path = gp.get_poster_image(movie['id'])
+            poster_path = f"poster/{movie['id']}.jpg"
             try:
                 width, height, channels, data = dpg.load_image(poster_path)
                 texture_id = dpg.add_static_texture(width, height, data)
-                with dpg.group(parent="DetailContent", horizontal=False):
-                    dpg.add_image(texture_id, width=200, height=300)
-                    dpg.add_text(f"Title: {movie['title']}", color=(255, 255, 255))
-                    dpg.add_text(f"Release Date: {movie.get('release_date', 'Unknown')}", color=(255, 255, 255))
-                    dpg.add_text(f"Overview: {movie.get('overview', 'No description available.')}", wrap=700, color=(255, 255, 255))
-                    dpg.add_text(f"Rating: {movie.get('vote_average', 'N/A')}", color=(255, 255, 255))
+                with dpg.group(parent="DetailContent", horizontal=True):
+                    dpg.add_image(texture_id, width=200, height=300, pos= (20,20))
+                    with dpg.group(horizontal=False):
+                        dpg.add_spacer(width=30)
+                        titleM = dpg.add_text(f"{movie['title']}", color=(255, 255, 255), indent=30)
+                        dpg.bind_item_font(titleM, titlemovieText)
+                        dpg.add_spacer(width=10)
+
+                        release = dpg.add_text(f"Release Date: {movie.get('release_date', 'Unknown')}", color=(255, 255, 255))
+                        dpg.bind_item_font(release, detailText)
+                        dpg.add_spacer(width=10)
+
+                        overView = dpg.add_text(f"Overview: {movie.get('overview', 'No description available.')}", wrap=700, color=(255, 255, 255))
+                        dpg.bind_item_font(overView, detailText)
+                        dpg.add_spacer(width=10)
+
+                        rating = dpg.add_text(f"Rating: {movie.get('vote_average', 'N/A')}", color=(255, 255, 255))
+                        dpg.bind_item_font(rating, detailText)
+
             except Exception as e:
                 dpg.add_text(f"Poster not available: {e}")
         
@@ -121,7 +134,6 @@ with dpg.theme() as child_window_theme:
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (100, 100, 150, 255))  
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, (150, 150, 200, 255))  
 
-
 with dpg.font_registry():
     # Tải font từ file
     header = dpg.add_font("font/LithosPro-Regular.otf",40)  
@@ -129,6 +141,9 @@ with dpg.font_registry():
     title = dpg.add_font("font/MAIAN.TTF",20)
     titleMG = dpg.add_font("font/arialbd.ttf",13)
     movieText = dpg.add_font("font/MAIAN.TTF",15)
+    detailText = dpg.add_font("font/arial.ttf",16)
+    titlemovieText = dpg.add_font("font/LithosPro-Black.otf",35)
+
 
 with dpg.theme() as input_theme:
     with dpg.theme_component(dpg.mvInputText):  
@@ -210,7 +225,7 @@ with dpg.window(label="Genre", tag="Genre UI", show=False):
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme) 
 
-    with dpg.child_window(tag="Genresults_list", width=800, height=600, pos=(100, 150)):
+    with dpg.child_window(tag="Genresults_list", width=800, height=480, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("Genresults_list", child_window_theme)
 
@@ -219,8 +234,24 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     headerDetail = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("DetailUI", "Primary Window"), pos=(50, 60))        
     dpg.bind_item_font(headerDetail, header)
     dpg.bind_item_theme(headerDetail, transparent_button_theme)
-    # with dpg.group(tag="DetailContent", width=480, height=220, pos=(270, 360)):
-    #     dpg.add_text("Movie details will appear here.")
+
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos=(310, 45)):
+        for genre in ["Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(310, 70)):  
+        for genre in ["Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme)  
+
+    with dpg.group(horizontal=True, horizontal_spacing=20, pos =(310, 95)):  
+        for genre in ["History", "War", "Music", "Documentary", "Foreign", "Tv movie"]:
+            btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
+            dpg.bind_item_font(btn, buttonFont)
+            dpg.bind_item_theme(btn, transparent_button_theme) 
+            
     with dpg.child_window(tag="DetailContent", width=800, height=600, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("DetailContent", child_window_theme)
