@@ -68,17 +68,16 @@ def show_movie_details(sender, app_data, user_data):
         return
     dpg.delete_item("DetailContent", children_only=True)  # Clear everything under DetailUI
     movie = user_data  # Thông tin phim được truyền qua user_data
+    print (movie)
     if dpg.does_item_exist("DetailTextureRegistry"):
         dpg.delete_item("DetailTextureRegistry")
 
     try:    
         with dpg.texture_registry(tag="DetailTextureRegistry") as reg_id:
-            poster_path = gp.get_poster_image(movie['id'])
-
-            for movieid in movies_data:
-                if movie['id'] == movieid:
-                    movie_details = movies_data.get(str(movie['id']))
-
+            gp.get_poster_image(movie['id'])
+            poster_path = f"poster/{movie['id']}.jpg"
+            movie_details = movies_data.get(str(movie['id']))
+            print("hacHACB")
             try:
                 width, height, channels, data = dpg.load_image(poster_path)
                 texture_id = dpg.add_static_texture(width, height, data)
@@ -86,19 +85,20 @@ def show_movie_details(sender, app_data, user_data):
                     dpg.add_image(texture_id, width=200, height=300, pos= (20,20))
                     with dpg.group(horizontal=False):
                         dpg.add_spacer(width=30)
-                        titleM = dpg.add_text(f"{movie['title']}", color=(255, 255, 255), indent=30)
+                        titleM = dpg.add_text(f"{movie['title']}", color=(255, 255, 255), indent=30, wrap = 500)
                         dpg.bind_item_font(titleM, titlemovieText)
                         dpg.add_spacer(width=10)
 
-                        release = dpg.add_text(f"Release Date: {movie_details.get('release_date', 'Unknown')}", color=(255, 255, 255))
+                        release = dpg.add_text(f"Release Date: {movie_details.get('release_date', 'Unknown')}", color=(255, 255, 255), indent=30)
+                        print (movie_details.get('release_date', 'Unknown'))
                         dpg.bind_item_font(release, detailText)
                         dpg.add_spacer(width=10)
 
-                        overView = dpg.add_text(f"Overview: {movie_details.get('overview', 'No description available.')}", wrap=550, color=(255, 255, 255))
+                        overView = dpg.add_text(f"Overview: {movie_details.get('overview', 'No description available.')}", wrap=500, color=(255, 255, 255), indent=30)
                         dpg.bind_item_font(overView, detailText)
                         dpg.add_spacer(width=10)
 
-                        rating = dpg.add_text(f"Rating: {movie_details.get('vote_average', 'N/A')}", color=(255, 255, 255))
+                        rating = dpg.add_text(f"Rating: {movie_details.get('vote_average', 'N/A')}", color=(255, 255, 255), indent=30)
                         dpg.bind_item_font(rating, detailText)
 
             except Exception as e:
@@ -129,8 +129,8 @@ def search_movies(sender, app_data, user_data):
         else:
             for _, row in top_movies.iterrows():
                 movie = {
-                    "id": row["id"],
                     "title": row["title"],
+                    "id": row["id"],
                     "vote_average": row["vote_average"],
                     "release_date": row["release_date"],
                     "overview": row["overview"],
@@ -271,7 +271,7 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme) 
 
-    with dpg.child_window(tag="DetailContent", width=800, height=600, pos=(100, 150)):
+    with dpg.child_window(tag="DetailContent", width=800, height=480, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("DetailContent", child_window_theme)
         
