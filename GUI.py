@@ -1,6 +1,7 @@
 import os
 import dearpygui.dearpygui as dpg
 import find_by_genre as fbg
+import getposter as gp
 import all_field as search
 import json
 
@@ -30,7 +31,7 @@ def genre_menu_callback(sender, app_data, user_data):
     if movies:
         with dpg.texture_registry(tag="GenreTextureRegistry") as reg_id:
             for movie in movies:
-                poster_path = f"poster/{movie['id']}.jpg"
+                poster_path = gp.get_poster_image(movie['id'])
                 try:
                     width, height, channels, data = dpg.load_image(poster_path)
                     texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)

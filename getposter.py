@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from PIL import Image
+import requests
+import os
 from io import BytesIO
 import json
 
@@ -19,6 +21,15 @@ def load_json(file_path):
 movies_data = load_json("dataset/movies.json")
 
 def get_poster_image(id):
+    # Đường dẫn file poster
+    poster_path = f"poster/{id}.jpg"
+    default_path = "poster/default.jpg"
+    
+    # Kiểm tra nếu poster đã tồn tại
+    if os.path.exists(poster_path):
+        return poster_path
+
+    # Nếu chưa tồn tại, tiến hành crawl poster
     url = f"https://www.themoviedb.org/movie/{id}"
     response = requests.get(url)
     
@@ -31,11 +42,33 @@ def get_poster_image(id):
         
         if poster:
             # Lấy giá trị của thuộc tính 'src'
-            return poster['src']
+            poster_url = poster['src']
+            
+            # Tải ảnh về
+            img_response = requests.get(poster_url)
+            
+            if img_response.status_code == 200:
+                # Tạo thư mục 'poster' nếu chưa tồn tại
+                os.makedirs('poster', exist_ok=True)
+                
+                # Lưu ảnh vào file poster/{id}.jpg
+                with open(poster_path, 'wb') as f:
+                    f.write(img_response.content)
+                
+                # Kiểm tra lại nếu file ảnh thực sự tồn tại
+                if os.path.exists(poster_path):
+                    return poster_path
+                else:
+                    print("Lỗi khi lưu poster.")
+            else:
+                print("Không tải được ảnh từ URL.")
         else:
             print("Không tìm thấy poster.")
     else:
         print(f"Truy cập trang thất bại với mã lỗi {response.status_code}.")
+    
+    # Trả về ảnh mặc định nếu không có poster
+    return default_path
 
 # Hàm nhập ID từ người dùng
 def input_movie_id():
@@ -46,15 +79,15 @@ def input_movie_id():
         print("ID phải là một số nguyên hợp lệ.")
         return None
 
-# Sử dụng hàm nhập ID và lấy URL poster
-movie_id = input_movie_id()
+# # Sử dụng hàm nhập ID và lấy URL poster
+# movie_id = input_movie_id()
 
-if movie_id:
-    poster_url = get_poster_image(movie_id)
-    if poster_url:
-        print("Poster Image URL:", poster_url)
+# if movie_id:
+#     poster_url = get_poster_image(movie_id)
+#     if poster_url:
+#         print("Poster Image URL:", poster_url)
         
-        # Tải hình ảnh và hiển thị
-        response = requests.get(poster_url)
-        img = Image.open(BytesIO(response.content))
-        img.show()  # Hiển thị hình ảnh
+#         # Tải hình ảnh và hiển thị
+#         response = requests.get(poster_url)
+#         img = Image.open(BytesIO(response.content))
+#         img.show()  # Hiển thị hình ảnh
