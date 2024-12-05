@@ -1,9 +1,11 @@
+import os
 import dearpygui.dearpygui as dpg
 import find_by_genre as fbg
 import all_field as search
 import json
 
 movies_data = fbg.load_json("dataset/movies.json")
+
 
 dpg.create_context()
 
@@ -12,21 +14,37 @@ def switch_ui(hide_ui, show_ui):
     dpg.show_item(show_ui)  
 
 def genre_menu_callback(sender, app_data, user_data):
+    poster_paths = []
     genre = user_data
-    movies = fbg.find_top_movies_by_genre(genre.lower())  # Gọi hàm lấy danh sách phim
+    movies = fbg.find_top_movies_by_genre(genre.lower())  # Lấy danh sách phim theo thể loại
+
+    if not dpg.does_item_exist("Genresults_list"):
+        print("Error: 'Genresults_list' does not exist!")
+        return
 
     dpg.delete_item("Genresults_list", children_only=True)  # Xóa kết quả cũ
-    
-    if movies:
-        for movie in movies:
-            # width2, height2, channels2, data2 = dpg.load_image("asset/Homepage.png")
-            # texture_id2 = dpg.add_static_texture(width2, height2, data2)
-            movietext1 = dpg.add_text(f"{movie['title']}      {movie['vote_average']}", parent="Genresults_list")  # Chỉ hiển thị tên phim
-            dpg.bind_item_font(movietext1, movieText)
 
+    if movies:
+        with dpg.texture_registry(tag="GenreTextureRegistry") as reg_id:
+            for movie in movies:
+                poster_path = f"poster/{movie['id']}.jpg"
+                try:
+                    width, height, channels, data = dpg.load_image(poster_path)
+                    texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+                    
+                    with dpg.group(parent="Genresults_list", horizontal=False):
+                        dpg.add_image(texture_id, width=100, height=150)  
+                        with dpg.group(horizontal=True): 
+                            dpg.add_text(f"{movie['title']} ({movie['vote_average']})")
+                            dpg.add_text(f"ID: {movie['id']}")
+                except Exception as e:
+                    print(f"Could not load image {poster_path}: {e}")
     else:
         dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="Genresults_list")
-    switch_ui("Primary Window", "Genre UI") 
+
+    switch_ui("Primary Window", "Genre UI")
+
+
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -82,7 +100,6 @@ with dpg.texture_registry():
     texture_id = dpg.add_static_texture(width, height, data)
     width1, height1, channels1, data1 = dpg.load_image("asset/bgExtra.png")
     bgExtra = dpg.add_static_texture(width1, height1, data1)
-
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
         dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0), category=dpg.mvThemeCat_Core)  # Nền bình thường (trong suốt)
@@ -91,6 +108,7 @@ with dpg.theme() as transparent_button_theme:
 
 with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     dpg.add_image(texture_id)
+    
     dpg.draw_text((400, 20), "NEMORY", color=(255, 255, 255, 255), size=40, tag="custom_text")
     dpg.bind_item_font("custom_text", header)
 
@@ -151,11 +169,9 @@ with dpg.window(label="Genre", tag="Genre UI", show=False):
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme) 
 
-    with dpg.child_window(tag="Genresults_list", width=480, height=220, pos=(270, 360)):
+    with dpg.child_window(tag="Genresults_list", width=800, height=600, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("Genresults_list", child_window_theme)
-
-    #dpg.add_child_window(tag="genre_results", width=600, height=400, pos=(50, 80))  
 
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)

@@ -5,8 +5,6 @@ import all_field as search
 import json
 
 movies_data = fbg.load_json("dataset/movies.json")
-poster_paths=[]
-texture_ids = []
 
 
 dpg.create_context()
@@ -16,27 +14,36 @@ def switch_ui(hide_ui, show_ui):
     dpg.show_item(show_ui)  
 
 def genre_menu_callback(sender, app_data, user_data):
+    poster_paths = []
     genre = user_data
-    movies = fbg.find_top_movies_by_genre(genre.lower())  # Get movie list
+    movies = fbg.find_top_movies_by_genre(genre.lower())  # Lấy danh sách phim theo thể loại
 
     if not dpg.does_item_exist("Genresults_list"):
         print("Error: 'Genresults_list' does not exist!")
         return
 
-    dpg.delete_item("Genresults_list", children_only=True)  # Clear old results
+    dpg.delete_item("Genresults_list", children_only=True)  # Xóa kết quả cũ
 
     if movies:
-        for movie in movies:
-            # Construct poster path
-            poster_path = f"poster/{movie['id']}.jpg"
-            poster_paths.append({
-                    "path": poster_path, 
-                    "title": movie['title'],
-                    "vote_average": movie['vote_average']})
+        with dpg.texture_registry(tag="GenreTextureRegistry") as reg_id:
+            for movie in movies:
+                poster_path = f"poster/{movie['id']}.jpg"
+                try:
+                    width, height, channels, data = dpg.load_image(poster_path)
+                    texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+                    
+                    with dpg.group(parent="Genresults_list", horizontal=False):
+                        dpg.add_image(texture_id, width=100, height=150)  
+                        with dpg.group(horizontal=True): 
+                            dpg.add_text(f"{movie['title']} ({movie['vote_average']})")
+                            dpg.add_text(f"ID: {movie['id']}")
+                except Exception as e:
+                    print(f"Could not load image {poster_path}: {e}")
     else:
         dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="Genresults_list")
 
     switch_ui("Primary Window", "Genre UI")
+
 
 
 def search_movies(sender, app_data, user_data):
@@ -93,11 +100,6 @@ with dpg.texture_registry():
     texture_id = dpg.add_static_texture(width, height, data)
     width1, height1, channels1, data1 = dpg.load_image("asset/bgExtra.png")
     bgExtra = dpg.add_static_texture(width1, height1, data1)
-    for path in poster_paths:
-        width2, height2, channels2, data2 = dpg.load_image(path['path'])
-        posterImg = dpg.add_static_texture(width2, height2, data2)
-        texture_ids.append((posterImg, path['title'], path['vote_average']))
-
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
         dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0), category=dpg.mvThemeCat_Core)  # Nền bình thường (trong suốt)
@@ -167,21 +169,8 @@ with dpg.window(label="Genre", tag="Genre UI", show=False):
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme) 
 
-    with dpg.child_window(tag="Genresults_list", width=700, height=600, pos=(0, 0)):
+    with dpg.child_window(tag="Genresults_list", width=800, height=600, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
-        for i, (texture_id, title, vote_average) in enumerate(texture_ids):
-            col = i % 4 
-            row = i // 4  
-            x = col * (100 + 20)
-            y = row * (150 + 20)
-
-            dpg.draw_image(texture_id, pmin=(x, y), pmax=(x + 100, y + 150),pos=(30,60))
-            dpg.add_image(texture_id, width=100, height=150, pos=(30, 60))
-            text_x = x + 100 / 2
-            text_y = y + 150 + 10
-            dpg.draw_text((text_x, text_y), title, size=15, color=(255, 255, 255, 255), center=True)
-            dpg.draw_text((text_x, text_y), vote_average, size=15, color=(255, 255, 255, 255))
-
     dpg.bind_item_theme("Genresults_list", child_window_theme)
 
 # Tạo viewport và hiển thị
