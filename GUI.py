@@ -5,8 +5,9 @@ import getposter as gp
 import all_field as search
 import json
 
-movies_data = fbg.load_json("dataset/movies.json")
-
+movies_file = "dataset/movies.json"
+movies_data = fbg.load_json(movies_file)
+current_ui = "Primary Window"
 
 dpg.create_context()
 
@@ -15,6 +16,9 @@ def switch_ui(hide_ui, show_ui):
     dpg.show_item(show_ui)  
 
 def genre_menu_callback(sender, app_data, user_data):
+    global current_ui
+    current_ui = "Genre UI"
+
     genre = user_data
     movies = fbg.find_top_movies_by_genre(genre.lower())  # Lấy danh sách phim theo thể loại
 
@@ -57,6 +61,8 @@ def genre_menu_callback(sender, app_data, user_data):
 
 # Hàm hiển thị giao diện chi tiết phim
 def show_movie_details(sender, app_data, user_data):
+    global current_ui
+
     if not dpg.does_item_exist("DetailUI"):
         print("Error: Parent container 'DetailUI' does not exist.")
         return
@@ -67,7 +73,12 @@ def show_movie_details(sender, app_data, user_data):
 
     try:    
         with dpg.texture_registry(tag="DetailTextureRegistry") as reg_id:
-            poster_path = f"poster/{movie['id']}.jpg"
+            poster_path = gp.get_poster_image(movie['id'])
+
+            for movieid in movies_data:
+                if movie['id'] == movieid:
+                    movie_details = movies_data.get(str(movie['id']))
+
             try:
                 width, height, channels, data = dpg.load_image(poster_path)
                 texture_id = dpg.add_static_texture(width, height, data)
@@ -79,15 +90,15 @@ def show_movie_details(sender, app_data, user_data):
                         dpg.bind_item_font(titleM, titlemovieText)
                         dpg.add_spacer(width=10)
 
-                        release = dpg.add_text(f"Release Date: {movie.get('release_date', 'Unknown')}", color=(255, 255, 255))
+                        release = dpg.add_text(f"Release Date: {movie_details.get('release_date', 'Unknown')}", color=(255, 255, 255))
                         dpg.bind_item_font(release, detailText)
                         dpg.add_spacer(width=10)
 
-                        overView = dpg.add_text(f"Overview: {movie.get('overview', 'No description available.')}", wrap=700, color=(255, 255, 255))
+                        overView = dpg.add_text(f"Overview: {movie_details.get('overview', 'No description available.')}", wrap=550, color=(255, 255, 255))
                         dpg.bind_item_font(overView, detailText)
                         dpg.add_spacer(width=10)
 
-                        rating = dpg.add_text(f"Rating: {movie.get('vote_average', 'N/A')}", color=(255, 255, 255))
+                        rating = dpg.add_text(f"Rating: {movie_details.get('vote_average', 'N/A')}", color=(255, 255, 255))
                         dpg.bind_item_font(rating, detailText)
 
             except Exception as e:
@@ -96,7 +107,7 @@ def show_movie_details(sender, app_data, user_data):
         # Switch UI after successfully updating details
     except Exception as e:
         print(f"Error creating movie details group: {e}")
-    switch_ui("Genre UI", "DetailUI")
+    switch_ui(current_ui, "DetailUI")
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -117,8 +128,15 @@ def search_movies(sender, app_data, user_data):
             dpg.add_text("No results found.")
         else:
             for _, row in top_movies.iterrows():
-                titletext = dpg.add_text(f"Title: {row['title']}")
-                dpg.bind_item_font(titletext, movieText)
+                movie = {
+                    "id": row["id"],
+                    "title": row["title"],
+                    "vote_average": row["vote_average"],
+                    "release_date": row["release_date"],
+                    "overview": row["overview"],
+                }
+                titletext = dpg.add_button(label = f"Title: {row['title']}", callback=show_movie_details,user_data=movie)
+                dpg.bind_item_theme(titletext, transparent_button_theme)
                 try:
                     genres_data = json.loads(row['genres']) if row['genres'] else []
                     genre_names = [genre['name'] for genre in genres_data]
@@ -163,6 +181,7 @@ with dpg.theme() as transparent_button_theme:
         dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (255, 255, 255, 50), category=dpg.mvThemeCat_Core)  # Khi nhấn
 
 with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
+    current_ui = "Primary Window"
     dpg.add_image(texture_id)
     
     dpg.draw_text((400, 20), "NEMORY", color=(255, 255, 255, 255), size=40, tag="custom_text")
@@ -251,7 +270,7 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
             btn = dpg.add_button(label=genre, callback=genre_menu_callback, user_data=genre)
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme) 
-            
+
     with dpg.child_window(tag="DetailContent", width=800, height=600, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("DetailContent", child_window_theme)
