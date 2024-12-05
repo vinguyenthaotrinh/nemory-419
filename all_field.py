@@ -5,12 +5,15 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import json
+import os
 
 # Ensure nltk packages are downloaded
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('punkt')
-nltk.download('punkt_tab')
+nltk_path = 'nltk_data'
+if not os.path.exists(nltk_path):
+    nltk.download('stopwords')
+    nltk.download('wordnet')
+    nltk.download('punkt')
+    nltk.download('punkt_tab')
 
 # Initialize the lemmatizer
 lemmatizer = WordNetLemmatizer()
