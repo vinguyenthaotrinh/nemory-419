@@ -15,7 +15,6 @@ def switch_ui(hide_ui, show_ui):
     dpg.show_item(show_ui)  
 
 def genre_menu_callback(sender, app_data, user_data):
-    poster_paths = []
     genre = user_data
     movies = fbg.find_top_movies_by_genre(genre.lower())  # Lấy danh sách phim theo thể loại
 
@@ -30,23 +29,31 @@ def genre_menu_callback(sender, app_data, user_data):
 
     if movies:
         with dpg.texture_registry(tag="GenreTextureRegistry") as reg_id:
-            for movie in movies:
+            row = None  # Dùng để tạo một hàng mới
+            for idx, movie in enumerate(movies):
+                if idx % 5 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
+                    row = dpg.add_group(parent="Genresults_list", horizontal=True, horizontal_spacing=60)
+
                 poster_path = gp.get_poster_image(movie['id'])
                 try:
                     width, height, channels, data = dpg.load_image(poster_path)
                     texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
-                    
-                    with dpg.group(parent="Genresults_list", horizontal=False):
+
+                    with dpg.group(parent=row, horizontal=False):
                         dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
-                        with dpg.group(horizontal=True): 
-                            dpg.add_text(f"{movie['title']} ({movie['vote_average']})")
-                            dpg.add_text(f"ID: {movie['id']}")
+                        dpg.add_spacer(width=25)
+                        titletext = dpg.add_text(f"{movie['title']} ({movie['vote_average']})", wrap=110)
+                        dpg.add_spacer(width=25)
+                        dpg.bind_item_font(titletext, titleMG)
+
+                        #dpg.add_text(f"ID: {movie['id']}", wrap=150)
                 except Exception as e:
                     print(f"Could not load image {poster_path}: {e}")
     else:
         dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="Genresults_list")
 
     switch_ui("Primary Window", "Genre UI")
+
 
 # Hàm hiển thị giao diện chi tiết phim
 def show_movie_details(sender, app_data, user_data):
@@ -120,6 +127,7 @@ with dpg.font_registry():
     header = dpg.add_font("font/LithosPro-Regular.otf",40)  
     buttonFont = dpg.add_font("font/LithosPro-Black.otf",13) 
     title = dpg.add_font("font/MAIAN.TTF",20)
+    titleMG = dpg.add_font("font/arialbd.ttf",13)
     movieText = dpg.add_font("font/MAIAN.TTF",15)
 
 with dpg.theme() as input_theme:
