@@ -67,7 +67,7 @@ def show_movie_details(sender, app_data, user_data):
 
     try:    
         with dpg.texture_registry(tag="DetailTextureRegistry") as reg_id:
-            poster_path = f"poster/{movie['id']}.jpg"
+            poster_path = gp.get_poster_image(movie['id'])
             try:
                 width, height, channels, data = dpg.load_image(poster_path)
                 texture_id = dpg.add_static_texture(width, height, data)
