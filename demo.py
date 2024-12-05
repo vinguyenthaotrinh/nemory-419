@@ -5,6 +5,9 @@ import all_field as search
 import json
 
 movies_data = fbg.load_json("dataset/movies.json")
+poster_paths=[]
+texture_ids = []
+
 
 dpg.create_context()
 
@@ -23,49 +26,13 @@ def genre_menu_callback(sender, app_data, user_data):
     dpg.delete_item("Genresults_list", children_only=True)  # Clear old results
 
     if movies:
-        row_counter = 0  # Counter for movies in a row
-        current_row = None  # Initialize current row
         for movie in movies:
             # Construct poster path
             poster_path = f"poster/{movie['id']}.jpg"
-            if os.path.exists(poster_path):
-                try:
-                    width2, height2, channels2, data2 = dpg.load_image(poster_path)
-                    # Create static texture
-                    posterImg = dpg.add_static_texture(width2, height2, data2)
-                    dpg.add_image(poster_path, width2, height2,)
-                except Exception as e:
-                    print(f"Error loading texture for {poster_path}: {e}")
-                    posterImg = None
-            else:
-                print(f"Poster file not found: {poster_path}")
-                posterImg = None
-
-            # Start a new row if needed
-            if row_counter == 0:
-                try:
-                    current_row = dpg.group(horizontal=True, horizontal_spacing=30, parent="Genresults_list")
-                except Exception as e:
-                    print(f"Error creating new row: {e}")
-                    current_row = None
-
-            # Add movie details
-            if current_row:
-                try:
-                    with dpg.group(parent=current_row):
-                        if posterImg:
-                            dpg.add_image(posterImg, width=100, height=150)
-                        title_movie = dpg.add_text(f"{movie['title']}", wrap=120)
-                        dpg.bind_item_font(title_movie, movieText)
-
-                        title_vote = dpg.add_text(f"{movie['vote_average']} ★")
-                        dpg.bind_item_font(title_vote, movieText)
-                except Exception as e:
-                    print(f"Error adding movie details for {movie['title']}: {e}")
-
-            row_counter += 1
-            if row_counter >= 5:  # Reset for a new row
-                row_counter = 0
+            poster_paths.append({
+                    "path": poster_path, 
+                    "title": movie['title'],
+                    "vote_average": movie['vote_average']})
     else:
         dpg.add_text(f"Không tìm thấy phim nào trong thể loại '{genre}'", parent="Genresults_list")
 
@@ -126,8 +93,10 @@ with dpg.texture_registry():
     texture_id = dpg.add_static_texture(width, height, data)
     width1, height1, channels1, data1 = dpg.load_image("asset/bgExtra.png")
     bgExtra = dpg.add_static_texture(width1, height1, data1)
-
-
+    for path in poster_paths:
+        width2, height2, channels2, data2 = dpg.load_image(path['path'])
+        posterImg = dpg.add_static_texture(width2, height2, data2)
+        texture_ids.append((posterImg, path['title'], path['vote_average']))
 
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
@@ -198,11 +167,22 @@ with dpg.window(label="Genre", tag="Genre UI", show=False):
             dpg.bind_item_font(btn, buttonFont)
             dpg.bind_item_theme(btn, transparent_button_theme) 
 
-    with dpg.child_window(tag="Genresults_list", width=700, height=600, pos=(270, 360)):
+    with dpg.child_window(tag="Genresults_list", width=700, height=600, pos=(0, 0)):
         dpg.add_text("Results will appear here.") 
-    dpg.bind_item_theme("Genresults_list", child_window_theme)
+        for i, (texture_id, title, vote_average) in enumerate(texture_ids):
+            col = i % 4 
+            row = i // 4  
+            x = col * (100 + 20)
+            y = row * (150 + 20)
 
-    #dpg.add_child_window(tag="genre_results", width=600, height=400, pos=(50, 80))  
+            dpg.draw_image(texture_id, pmin=(x, y), pmax=(x + 100, y + 150),pos=(30,60))
+            dpg.add_image(texture_id, width=100, height=150, pos=(30, 60))
+            text_x = x + 100 / 2
+            text_y = y + 150 + 10
+            dpg.draw_text((text_x, text_y), title, size=15, color=(255, 255, 255, 255), center=True)
+            dpg.draw_text((text_x, text_y), vote_average, size=15, color=(255, 255, 255, 255))
+
+    dpg.bind_item_theme("Genresults_list", child_window_theme)
 
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)
