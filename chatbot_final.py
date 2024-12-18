@@ -76,12 +76,6 @@ else:
     collection = client.get_collection(name=collection_name)
     print("Vector store loaded.")
 
-# --- Tải model GPT4All ---
-if not os.path.exists(os.path.join(MODEL_PATH_CACHE, MODEL_DOWNLOAD)):
-    print("Downloading model...")
-    GPT4All.download_model(MODEL_DOWNLOAD, model_path=MODEL_PATH_CACHE)
-    print("Model downloaded!")
-
 # --- Custom LLM ---
 class CustomGPT4All(LLM):
     model: Any
