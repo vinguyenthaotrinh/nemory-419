@@ -60,7 +60,7 @@ if not any(collection.name == collection_name for collection in client.list_coll
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=64)
     texts = text_splitter.split_documents(data)
-    
+
     collection = client.create_collection(name=collection_name, embedding_function=embedding_function)
 
     batch_size = 5461 # Maximum batch size allowed by the current chroma version
@@ -78,12 +78,21 @@ else:
     collection = client.get_collection(name=collection_name)
     print("Vector store loaded.")
 
-custom_prompt_template = """You are a movie expert. Use the following information to answer the user's question. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+# --- Prompt template ---
+custom_prompt_template = """Use the following information to answer the user's question.
+Keep the answer short, if possible under 50 words.
 
-Context: {context}
+{context}
+
+{chat_history}
+
 Question: {question}
+Answer:"""
 
-"""
+QA_CHAIN_PROMPT = PromptTemplate(
+    template=custom_prompt_template,
+    input_variables=["context", "question", "chat_history"]
+)
 
 # --- Tải model GPT4All ---
 if not os.path.exists(os.path.join(MODEL_PATH_CACHE, MODEL_DOWNLOAD)):
@@ -94,22 +103,22 @@ if not os.path.exists(os.path.join(MODEL_PATH_CACHE, MODEL_DOWNLOAD)):
 # --- Custom LLM ---
 class CustomGPT4All(LLM):
     model: Any
-    model_path: str  
+    model_path: str
 
     @property
     def _llm_type(self) -> str:
         return "custom_gpt4all"
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        response = self.model.generate(prompt, max_tokens=256)
+        response = self.model.generate(prompt, max_tokens=2048)
         return response
-    
+
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
-        return {"model_path": self.model_path}  
+        return {"model_path": self.model_path}
 print("Starting model...")
 # --- Khởi tạo model GPT4All ---
-model_instance = GPT4All(model_name=MODEL_DOWNLOAD, model_path=MODEL_PATH_CACHE, allow_download=False, verbose=True, device='cpu', n_threads=4)
+model_instance = GPT4All(model_name=MODEL_DOWNLOAD, model_path=MODEL_PATH_CACHE, allow_download=False, verbose=False, device='cpu', n_threads=4)
 print("Done init model. ")
 
 # --- Khởi tạo custom LLM ---
@@ -117,21 +126,28 @@ llm = CustomGPT4All(model=model_instance, model_path=MODEL_PATH_CACHE)
 
 # --- Tạo chain ---
 db = Chroma(client=client, collection_name=collection_name, embedding_function=hf_embeddings)
-retriever = db.as_retriever(search_kwargs={"k": 1})
+retriever = db.as_retriever(search_kwargs={"k": 2})
+memory = ConversationBufferMemory(
+    llm=llm, memory_key="chat_history", return_messages=True, output_key="answer"
+)
+# retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 1})
 
 qa_chain = ConversationalRetrievalChain.from_llm(
-    llm=llm,
+    llm,
     retriever=retriever,
-    return_source_documents=True
+    memory=memory,
+    chain_type="stuff",
+    combine_docs_chain_kwargs={"prompt": QA_CHAIN_PROMPT}
 )
 
 # --- Vòng lặp chatbot ---
 print("Chatbot: Hello! I'm a movie chatbot. What do you want to know about movies?")
-chat_history = []
 while True:
     query = input("You: ")
     if query.lower() == "quit":
         break
-    result = qa_chain.invoke({"question": query, "chat_history": chat_history})
+    # result = qa_chain.invoke({"question": query, "chat_history": chat_history})
+    # print("Chatbot:", result['answer'])
+    # chat_history.append((query, result["answer"]))
+    result = qa_chain.invoke({"question": query})
     print("Chatbot:", result['answer'])
-    chat_history.append((query, result["answer"]))
