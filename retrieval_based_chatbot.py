@@ -10,6 +10,7 @@ from langchain_chroma import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from gpt4all import GPT4All
 from langchain_core.prompts import PromptTemplate
+from langchain.memory import ConversationBufferMemory
 from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 
 from langchain_core.language_models.llms import LLM
@@ -21,8 +22,8 @@ from langchain.chains import ConversationalRetrievalChain
 CSV_FILE = "model_gpt/movie_data.csv"
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 PERSIST_DIRECTORY = "model_gpt/db"
-MODEL_DOWNLOAD = "orca-mini-3b-gguf2-q4_0.gguf"
-# MODEL_DOWNLOAD = "Llama-3.2-1B-Instruct-Q4_0.gguf" # lighter model
+# MODEL_DOWNLOAD = "orca-mini-3b-gguf2-q4_0.gguf"
+MODEL_DOWNLOAD = "Llama-3.2-1B-Instruct-Q4_0.gguf" # lighter model
 MODEL_PATH_CACHE = "model_gpt"
 
 hf_embeddings = HuggingFaceEmbeddings(model_name=MODEL_NAME)
@@ -77,12 +78,7 @@ else:
     collection = client.get_collection(name=collection_name)
     print("Vector store loaded.")
 
-custom_prompt_template = """You are a movie expert. Use the following information to answer the user's question.
-If you don't know the answer, just say that you don't know, don't try to make up an answer.
-Example:
-Context: The sky is blue.
-Question: What is the capital of France?
-Answer: I don't know.
+custom_prompt_template = """You are a movie expert. Use the following information to answer the user's question. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
 Context: {context}
 Question: {question}
@@ -105,15 +101,15 @@ class CustomGPT4All(LLM):
         return "custom_gpt4all"
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        response = self.model.generate(prompt, max_tokens=1024)
+        response = self.model.generate(prompt, max_tokens=256)
         return response
-
+    
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
-        return {"model_path": self.model_path}  # Truy cập model_path từ self
+        return {"model_path": self.model_path}  
 print("Starting model...")
 # --- Khởi tạo model GPT4All ---
-model_instance = GPT4All(model_name=MODEL_DOWNLOAD, model_path=MODEL_PATH_CACHE, allow_download=False, verbose=True, n_threads=4)
+model_instance = GPT4All(model_name=MODEL_DOWNLOAD, model_path=MODEL_PATH_CACHE, allow_download=False, verbose=True, device='cpu', n_threads=4)
 print("Done init model. ")
 
 # --- Khởi tạo custom LLM ---
@@ -121,7 +117,7 @@ llm = CustomGPT4All(model=model_instance, model_path=MODEL_PATH_CACHE)
 
 # --- Tạo chain ---
 db = Chroma(client=client, collection_name=collection_name, embedding_function=hf_embeddings)
-retriever = db.as_retriever(search_kwargs={"k": 2}, score_threshold=0.4)
+retriever = db.as_retriever(search_kwargs={"k": 1})
 
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
