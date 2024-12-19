@@ -136,7 +136,7 @@ def filter_movies():
     print("sort")
     
     print(genre)
-    movies = cs.find_movie_ids_by_filters(genre, country, year)
+    movies = cs.find_movie_ids_by_filters(genre, year, country)
     print(movies)
     print("gh")
     movies = cs.get_movies_information_from_ids(movies)
@@ -144,13 +144,13 @@ def filter_movies():
     print("gduf")
     movies = cs.sort_by_popularity(movies, 10)
     print(movies)
-
-    # if sort_by == "Popularity":
-    #     movies = sorted(movies, key=lambda x: x['popularity'], reverse=True)
-    # elif sort_by == "Rating":
-    #     movies = sorted(movies, key=lambda x: x['vote_average'], reverse=True)
-    # elif sort_by == "Latest Movie":
-    #     movies = sorted(movies, key=lambda x: x['release_date'], reverse=True)
+    
+    if sort_by == "Popularity":
+        movies = cs.sort_by_popularity(movies, 10)
+    elif sort_by == "Rating":
+        movies = cs.sort_movies_by_score(movies, 10)
+    elif sort_by == "Latest Movie":
+        movies = cs.sort_by_release_date(movies, 10)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("Movie_list"):
@@ -584,7 +584,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
 
     with dpg.group(pos=(700, 170), width = 150, height = 100):
         dropdown_sortby = dpg.add_combo(
-            items= ["Popularity", "Rating", "Lastes Movie"], 
+            items= ["Popularity", "Rating", "Latest Movie"], 
             default_value="Sort by",
             source=sort_selected,
             callback=on_select,

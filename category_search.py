@@ -58,7 +58,7 @@ def find_movie_ids_by_genre(genre):
     Tìm danh sách ID phim theo thể loại.
     Nếu genre rỗng, trả về tất cả các ID phim trong movies_data.
     """
-    if not genre or genre == "Genre":  # Nếu genre rỗng, trả về tất cả các phim
+    if not genre or genre == "Genre" or genre == "Select Genre":  # Nếu genre rỗng, trả về tất cả các phim
         return list(movies_data.keys())
     
     genre = genre.lower()
@@ -72,7 +72,7 @@ def find_movie_ids_by_year(release_year):
     Tìm danh sách ID phim theo năm phát hành.
     Nếu release_year rỗng, trả về tất cả các ID phim trong movies_data.
     """
-    if not release_year or release_year == "Release Year":  # Nếu release_year rỗng, trả về tất cả các phim
+    if not release_year or release_year == "Release Year" or release_year == "Select Year":  # Nếu release_year rỗng, trả về tất cả các phim
         return list(movies_data.keys())
     
     return releases_data.get(release_year, [])
@@ -82,7 +82,7 @@ def find_movie_ids_by_country(country):
     Tìm danh sách ID phim theo quốc gia.
     Nếu country rỗng, trả về tất cả các ID phim trong movies_data.
     """
-    if not country or country=="Country":  # Nếu country rỗng, trả về tất cả các phim
+    if not country or country=="Country" or country == "Select Country":  # Nếu country rỗng, trả về tất cả các phim
         return list(movies_data.keys())
     
     return country_data.get(country.lower(), [])
