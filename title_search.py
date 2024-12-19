@@ -55,7 +55,7 @@ def preprocess_query(query):
     return lemmatize_text(query)
 
 # Search function
-def search(user_query):
+def title_search(user_query):
     processed_query = preprocess_query(user_query)
     user_vector = vectorizer.transform([processed_query])
     similarity_scores = cosine_similarity(user_vector, tfidf_matrix)
@@ -110,4 +110,4 @@ def search(user_query):
 # Run the search function
 # if __name__ == '__main__':
 #     user_query = input("Enter: ")
-#     search(user_query)
+#     title_search(user_query)
