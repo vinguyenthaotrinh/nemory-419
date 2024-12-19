@@ -223,35 +223,86 @@ def search_movies(sender, app_data, user_data):
     # Gọi hàm search và nhận kết quả
     top_movies = search.search(user_query)
 
-    dpg.delete_item("results_list", children_only=True)  
-    dpg.configure_item("results_list", show=True)  
+    if not dpg.does_item_exist("Movie_list"):
+        print("Error: 'Movie_list' does not exist!")
+        return
 
+    dpg.delete_item("Movie_list", children_only=True)  # Xóa kết quả cũ
 
-    # Create a container for search results
-    with dpg.group(tag="SearchResults", parent="results_list"):
-        dpg.bind_item_theme("results_list", result_background_theme)
+    if dpg.does_item_exist("MovieTextureRegistry"):
+        dpg.delete_item("MovieTextureRegistry")
 
-        if top_movies is None:
-            dpg.add_text("No results found.")
-        else:
-            for _, row in top_movies.iterrows():
-                movie = {
-                    "title": row["title"],
-                    "id": row["id"],
-                    "vote_average": row["vote_average"],
-                    "release_date": row["release_date"],
-                    "overview": row["overview"],
-                }
-                titletext = dpg.add_button(label = f"Title: {row['title']}", callback=show_movie_details,user_data=movie)
-                dpg.bind_item_theme(titletext, transparent_button_theme)
+    # Check if top_movies is valid
+    if top_movies is None or top_movies.empty:
+        dpg.add_text("Không tìm thấy phim nào", parent="Movie_list")
+        return
+
+    # Display movies with posters and details
+    with dpg.texture_registry(tag="MovieTextureRegistry") as reg_id:
+        row = None  # Container for a row of movies
+        for idx, (_, row_data) in enumerate(top_movies.iterrows()):  # Iterate over DataFrame rows
+            movie = {
+                "title": row_data["title"],
+                "id": row_data["id"],
+                "vote_average": row_data["vote_average"],
+                "release_date": row_data["release_date"],
+                "overview": row_data["overview"],
+            }
+
+            if idx % 5 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
+                row = dpg.add_group(parent="Movie_list", horizontal=True, horizontal_spacing=60)
+
+            poster_path = gp.get_poster_image(movie["id"])
+            if poster_path:
                 try:
-                    genres_data = json.loads(row['genres']) if row['genres'] else []
-                    genre_names = [genre['name'] for genre in genres_data]
-                    gennrestext = dpg.add_text(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
-                    dpg.bind_item_font(gennrestext, movieText)
-                except json.JSONDecodeError:
-                    dpg.add_text("Movie: Invalid format")
-                dpg.add_separator()  
+                    width, height, channels, data = dpg.load_image(poster_path)
+                    texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+
+                    with dpg.group(parent=row, horizontal=False):
+                        dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
+                        dpg.add_spacer(width=25)
+                        titletext = dpg.add_text(f"{movie['title']} ({movie['vote_average']})", wrap=110)
+                        dpg.add_spacer(width=25)
+                        dpg.bind_item_font(titletext, titleMG)
+                except Exception as e:
+                    print(f"Could not load image {poster_path}: {e}")
+            else:
+                print(f"No poster path found for movie ID {movie['id']}.")
+
+    display_text = f"Keyword: {user_query}"
+
+    if dpg.does_item_exist("filter_text"):
+        dpg.set_value("filter_text", display_text)
+    else:
+        dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+
+    switch_ui("Primary Window", "Search UI")
+
+    # # Create a container for search results
+    # with dpg.group(tag="SearchResults", parent="results_list"):
+    #     dpg.bind_item_theme("results_list", result_background_theme)
+
+    #     if top_movies is None:
+    #         dpg.add_text("No results found.")
+    #     else:
+    #         for _, row in top_movies.iterrows():
+    #             movie = {
+    #                 "title": row["title"],
+    #                 "id": row["id"],
+    #                 "vote_average": row["vote_average"],
+    #                 "release_date": row["release_date"],
+    #                 "overview": row["overview"],
+    #             }
+    #             titletext = dpg.add_button(label = f"Title: {row['title']}", callback=show_movie_details,user_data=movie)
+    #             dpg.bind_item_theme(titletext, transparent_button_theme)
+    #             try:
+    #                 genres_data = json.loads(row['genres']) if row['genres'] else []
+    #                 genre_names = [genre['name'] for genre in genres_data]
+    #                 gennrestext = dpg.add_text(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
+    #                 dpg.bind_item_font(gennrestext, movieText)
+    #             except json.JSONDecodeError:
+    #                 dpg.add_text("Movie: Invalid format")
+    #             dpg.add_separator()  
 
 
 def search_movies1(sender, app_data, user_data):
@@ -261,39 +312,64 @@ def search_movies1(sender, app_data, user_data):
     if not user_query.strip():
         print("Please enter a search query.")
         return
+    
+    display_text = f"Keyword: {user_query}"
+
+    if dpg.does_item_exist("filter_text"):
+        dpg.set_value("filter_text", display_text)
+    else:
+        dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
 
     # Gọi hàm search và nhận kết quả
     top_movies = search.search(user_query)
 
-    dpg.delete_item("results_list1", children_only=True)  
-    dpg.configure_item("results_list1", show=True)  
+    if not dpg.does_item_exist("Movie_list"):
+        print("Error: 'Movie_list' does not exist!")
+        return
 
+    dpg.delete_item("Movie_list", children_only=True)  # Xóa kết quả cũ
 
-    # Create a container for search results
-    with dpg.group(tag="SearchResults1", parent="results_list1"):
-        dpg.bind_item_theme("results_list1", result_background_theme)
+    if dpg.does_item_exist("MovieTextureRegistry"):
+        dpg.delete_item("MovieTextureRegistry")
 
-        if top_movies is None:
-            dpg.add_text("No results found.")
-        else:
-            for _, row in top_movies.iterrows():
-                movie = {
-                    "title": row["title"],
-                    "id": row["id"],
-                    "vote_average": row["vote_average"],
-                    "release_date": row["release_date"],
-                    "overview": row["overview"],
-                }
-                titletext = dpg.add_button(label = f"Title: {row['title']}", callback=show_movie_details,user_data=movie)
-                dpg.bind_item_theme(titletext, transparent_button_theme)
+    # Check if top_movies is valid
+    if top_movies is None or top_movies.empty:
+        dpg.add_text("Không tìm thấy phim nào", parent="Movie_list")
+        return
+
+    # Display movies with posters and details
+    with dpg.texture_registry(tag="MovieTextureRegistry") as reg_id:
+        row = None  # Container for a row of movies
+        for idx, (_, row_data) in enumerate(top_movies.iterrows()):  # Iterate over DataFrame rows
+            movie = {
+                "title": row_data["title"],
+                "id": row_data["id"],
+                "vote_average": row_data["vote_average"],
+                "release_date": row_data["release_date"],
+                "overview": row_data["overview"],
+            }
+
+            if idx % 5 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
+                row = dpg.add_group(parent="Movie_list", horizontal=True, horizontal_spacing=60)
+
+            poster_path = gp.get_poster_image(movie["id"])
+            if poster_path:
                 try:
-                    genres_data = json.loads(row['genres']) if row['genres'] else []
-                    genre_names = [genre['name'] for genre in genres_data]
-                    gennrestext = dpg.add_text(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
-                    dpg.bind_item_font(gennrestext, movieText)
-                except json.JSONDecodeError:
-                    dpg.add_text("Movie: Invalid format")
-                dpg.add_separator()  
+                    width, height, channels, data = dpg.load_image(poster_path)
+                    texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+
+                    with dpg.group(parent=row, horizontal=False):
+                        dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
+                        dpg.add_spacer(width=25)
+                        titletext = dpg.add_text(f"{movie['title']} ({movie['vote_average']})", wrap=110)
+                        dpg.add_spacer(width=25)
+                        dpg.bind_item_font(titletext, titleMG)
+                except Exception as e:
+                    print(f"Could not load image {poster_path}: {e}")
+            else:
+                print(f"No poster path found for movie ID {movie['id']}.")
+
+
 
 
 def dropdown_callback(sender, app_data, user_data):
@@ -452,10 +528,6 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 
     dpg.bind_item_theme("TopMovie_list", child_window_theme)
 
-    with dpg.child_window(tag="results_list", width=400, height=220, pos=(450, 75), border = False, show=False):
-        dpg.add_text("Results will appear here.",  color=(255, 255, 255, 0) )
-    dpg.bind_item_theme("results_list", child_window_searchbar_theme)
-
 with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.add_image(texture_id)
     dpg.add_text("Keyword", tag="filter_text", color=(255, 255, 255), pos=(370,110))
@@ -521,14 +593,9 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.bind_item_theme("SearchInput1", input_theme)
     dpg.bind_item_font("SearchInput1", title)
 
-    button_search1 = dpg.add_button(label="Search!", pos=(890, 45), callback=search_movies)
+    button_search1 = dpg.add_button(label="Search!", pos=(890, 45), callback=search_movies1)
     dpg.bind_item_theme(button_search1, transparent_button_theme)
     dpg.bind_item_font(button_search1, title)
-
-    with dpg.child_window(tag="results_list1", width=400, height=220, pos=(450, 85), border = False, show=False):
-        dpg.add_text("Results will appear here.",  color=(255, 255, 255, 0) )
-    dpg.bind_item_theme("results_list1", child_window_searchbar_theme)
-
 
 with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     dpg.add_image(bgExtra)
