@@ -69,7 +69,7 @@ def generate_refined_query(query, refinement, tokenizer, model):
   
 def interactive_search():
     print("\nWelcome to the Movie Search Chatbot!")
-    movies = load_dataset("data/movies.json")
+    movies = load_dataset("dataset/movies.json")
     vectorizer, tfidf_matrix = initialize_search_engine(movies)
     
     # Initialize LLM Model
