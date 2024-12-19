@@ -2,7 +2,7 @@ import os
 import dearpygui.dearpygui as dpg
 import find_by_genre as fbg
 import getposter as gp
-import all_field as search
+import all_field_keyword_search as search
 import json
 import category_search as cs
 
@@ -527,6 +527,17 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     dpg.draw_text((380, 140), "THE BEST MOVIES OF ALL TIME", color=(255, 255, 255, 255), size=20, tag="top_text")
     dpg.bind_item_font("top_text", title)
 
+    with dpg.group(pos=(300, 50), width = 150, height = 100):
+        dropdown_search = dpg.add_combo(
+            items=["Title", "Keyword", "Semantic"], 
+            callback=dropdown_callback,
+            user_data= "genre", 
+            default_value="Title",
+
+        )
+    dpg.bind_item_font(dropdown_search, buttonFont)
+    dpg.bind_item_theme(dropdown_search, dropdown_theme)  
+
     with dpg.group(pos=(300, 90), width = 150, height = 100):
         dropdown_genre = dpg.add_combo(
             items=genres, 
@@ -625,6 +636,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
         )
     dpg.bind_item_font(dropdown_sortby, buttonFont)
     dpg.bind_item_theme(dropdown_sortby, dropdown_theme)  
+    
 
     dpg.add_button(label="Find", tag = "btn_Find", callback=filter_movies, pos=(900,170))
     #center_text_in_window(1000, "filter_text", "Keyword", font_size=20)
