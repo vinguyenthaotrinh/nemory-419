@@ -33,6 +33,8 @@ with dpg.value_registry():
     genre_selected = dpg.add_string_value(default_value="Genre")
     country_selected = dpg.add_string_value(default_value="Country")
     release_year_selected = dpg.add_string_value(default_value="Release Year")
+    sort_selected = dpg.add_string_value(default_value="Sort by")
+
     
 
 def switch_ui(hide_ui, show_ui):
@@ -96,6 +98,7 @@ def filter_movies():
     genre = dpg.get_value(genre_selected)
     country = dpg.get_value(country_selected)
     year = dpg.get_value(release_year_selected)
+    sort_by = dpg.get_value(sort_selected)
 
     # Tạo chuỗi điều kiện hiển thị
     conditions = []
@@ -129,6 +132,13 @@ def filter_movies():
     movies = cs.find_movie_ids_by_filters(genre, country, year)
     movies = cs.get_movies_information_from_ids(movies)
     movies = cs.sort_by_popularity(movies, 10)
+
+    # if sort_by == "Popularity":
+    #     movies = sorted(movies, key=lambda x: x['popularity'], reverse=True)
+    # elif sort_by == "Rating":
+    #     movies = sorted(movies, key=lambda x: x['vote_average'], reverse=True)
+    # elif sort_by == "Latest Movie":
+    #     movies = sorted(movies, key=lambda x: x['release_date'], reverse=True)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("Movie_list"):
@@ -283,33 +293,6 @@ def search_movies(sender, app_data, user_data):
         dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
 
     switch_ui("Primary Window", "Search UI")
-
-    # # Create a container for search results
-    # with dpg.group(tag="SearchResults", parent="results_list"):
-    #     dpg.bind_item_theme("results_list", result_background_theme)
-
-    #     if top_movies is None:
-    #         dpg.add_text("No results found.")
-    #     else:
-    #         for _, row in top_movies.iterrows():
-    #             movie = {
-    #                 "title": row["title"],
-    #                 "id": row["id"],
-    #                 "vote_average": row["vote_average"],
-    #                 "release_date": row["release_date"],
-    #                 "overview": row["overview"],
-    #             }
-    #             titletext = dpg.add_button(label = f"Title: {row['title']}", callback=show_movie_details,user_data=movie)
-    #             dpg.bind_item_theme(titletext, transparent_button_theme)
-    #             try:
-    #                 genres_data = json.loads(row['genres']) if row['genres'] else []
-    #                 genre_names = [genre['name'] for genre in genres_data]
-    #                 gennrestext = dpg.add_text(f"Genres: {', '.join(genre_names) if genre_names else 'None'}")
-    #                 dpg.bind_item_font(gennrestext, movieText)
-    #             except json.JSONDecodeError:
-    #                 dpg.add_text("Movie: Invalid format")
-    #             dpg.add_separator()  
-
 
 def search_movies1(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -574,14 +557,14 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.bind_item_theme(dropdown_year2, dropdown_theme)  
 
     with dpg.group(pos=(700, 170), width = 150, height = 100):
-        dropdown_year2 = dpg.add_combo(
+        dropdown_sortby = dpg.add_combo(
             items= ["Popularity", "Rating", "Lastes Movie"], 
             default_value="Sort by",
             callback=on_select,
             user_data= "other"
         )
-    dpg.bind_item_font(dropdown_year2, buttonFont)
-    dpg.bind_item_theme(dropdown_year2, dropdown_theme)  
+    dpg.bind_item_font(dropdown_sortby, buttonFont)
+    dpg.bind_item_theme(dropdown_sortby, dropdown_theme)  
 
     dpg.add_button(label="Find", tag = "btn_Find", callback=filter_movies, pos=(900,170))
     #center_text_in_window(1000, "filter_text", "Keyword", font_size=20)
