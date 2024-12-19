@@ -27,8 +27,17 @@ countries = [
 
 year = [
     "Select Year",
-    "2024", "2023", "2022", "2021", "2020", "2019"
+    "2024", "2023", "2022", "2021", "2020", "2019", "2002"
 ]
+
+current_state = {
+    "keyword": "",
+    "filters": {
+        "genre": None,
+        "country": None,
+        "year": None
+    }
+}
 
 dpg.create_context()
 
@@ -44,6 +53,8 @@ def switch_ui(hide_ui, show_ui):
     dpg.hide_item(hide_ui)  
     if show_ui == "Primary Window":
         reset_primary_window()
+    else: reset_search_ui()
+
     dpg.show_item(show_ui)  
 
 def top_movie():
@@ -105,6 +116,12 @@ def filter_movies():
     year = dpg.get_value(release_year_selected)
     sort_by = dpg.get_value(sort_selected)
 
+    current_state["filters"]["genre"] = genre if genre != "Select Genre" else None
+    current_state["filters"]["country"] = country if country != "Select Country" else None
+    current_state["filters"]["year"] = year if year != "Select Year" else None
+
+    keyword = current_state["keyword"]
+
     # Tạo chuỗi điều kiện hiển thị
     conditions = []
     if genre != "Genre":
@@ -122,7 +139,7 @@ def filter_movies():
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
     else:
-        dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
 
     #ghép back filter vào movies = filter (genre, country, year)
     # filtered_movies = [movie for movie in movies if
@@ -130,27 +147,28 @@ def filter_movies():
     #                    (country == "" or movie["country"] == country) and
     #                    (year == "" or str(movie["year"]) == year)]
 
-    #Ghép back sort by Popularity, Rating, Lastest Movie
+    #Ghép back sort by Popularity, Rating, Latest Movie
+    movies = search.search(keyword)
+    movie_ids = [movie['id'] for movie in movies] if isinstance(movies, list) else movies['id'].tolist()
 
-    print(sort_by)
-    print("sort")
-    
-    print(genre)
-    movies = cs.find_movie_ids_by_filters(genre, year, country)
-    print(movies)
-    print("gh")
-    movies = cs.get_movies_information_from_ids(movies)
-    print(movies)
-    print("gduf")
+    print (movies)
+    print("ds")
+    filtered_ids = cs.find_movie_ids_by_filters(genre, country, year)
+    print(filtered_ids)
+    print("dhs")
+    final_movie_ids = set(movie_ids).intersection(filtered_ids)
+    print(final_movie_ids)
+    print ("hfehdcjd")
+
+    movies = cs.get_movies_information_from_ids(final_movie_ids)
     movies = cs.sort_by_popularity(movies, 10)
-    print(movies)
-    
-    if sort_by == "Popularity":
-        movies = cs.sort_by_popularity(movies, 10)
-    elif sort_by == "Rating":
-        movies = cs.sort_movies_by_score(movies, 10)
-    elif sort_by == "Latest Movie":
-        movies = cs.sort_by_release_date(movies, 10)
+
+    # if sort_by == "Popularity":
+    #     movies = sorted(movies, key=lambda x: x['popularity'], reverse=True)
+    # elif sort_by == "Rating":
+    #     movies = sorted(movies, key=lambda x: x['vote_average'], reverse=True)
+    # elif sort_by == "Latest Movie":
+    #     movies = sorted(movies, key=lambda x: x['release_date'], reverse=True)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("Movie_list"):
@@ -253,10 +271,21 @@ def reset_primary_window():
     # Reset giá trị của search input
     dpg.set_value("SearchInput", "")
 
+def reset_search_ui():
+    # Reset các dropdown về giá trị mặc định
+    dpg.set_value(dropdown_genre2, "Select Genre")
+    dpg.set_value(dropdown_country2, "Select Country")
+    dpg.set_value(dropdown_year2, "Select Year")
+    
+    # Reset giá trị của search input
+    dpg.set_value("SearchInput1", "")
+
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput")
-    print(user_query)
+    current_state["keyword"] = user_query
+    current_state["filters"] = {"genre": None, "country": None, "year": None}
+
     if not user_query.strip():
         print("Please enter a search query.")
         return
@@ -315,13 +344,15 @@ def search_movies(sender, app_data, user_data):
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
     else:
-        dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
 
     switch_ui("Primary Window", "Search UI")
 
 def search_movies1(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput1")
+    current_state["keyword"] = user_query
+
     print(user_query)
     if not user_query.strip():
         print("Please enter a search query.")
@@ -332,7 +363,7 @@ def search_movies1(sender, app_data, user_data):
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
     else:
-        dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
 
     # Gọi hàm search và nhận kết quả
     top_movies = search.search(user_query)
@@ -393,7 +424,7 @@ def dropdown_callback(sender, app_data, user_data):
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
             
     elif user_data == "country":
         dpg.set_value(country_selected, app_data)
@@ -403,7 +434,7 @@ def dropdown_callback(sender, app_data, user_data):
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
             
 
     elif user_data == "country":
@@ -414,14 +445,14 @@ def dropdown_callback(sender, app_data, user_data):
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
             
     else: 
         display_text = "There are no movies that match your request."
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
+            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
             
     filter_movies()
     switch_ui("Primary Window", "Search UI")
