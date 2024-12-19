@@ -117,7 +117,7 @@ def filter_movies():
         dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
 
     
-    movies = fbg.find_top_movies_by_genre("action")  # Lấy danh sách phim theo thể loại
+    # movies = fbg.find_top_movies_by_genre("action")  # Lấy danh sách phim theo thể loại
     #ghép back filter vào movies = filter (genre, country, year)
     # filtered_movies = [movie for movie in movies if
     #                    (genre == "" or movie["genre"] == genre) and
@@ -126,7 +126,9 @@ def filter_movies():
 
     #Ghép back sort by Popularity, Rating, Lastest Movie
     
-    movies = cs.find_movie_ids_by_filters(genre, country, year)
+    print("GHJK")
+    print(genre, year, country)
+    movies = cs.find_movie_ids_by_filters(genre, year, country)
     movies = cs.get_movies_information_from_ids(movies)
     movies = cs.sort_by_popularity(movies, 10)
 
@@ -186,7 +188,6 @@ def show_movie_details(sender, app_data, user_data):
             gp.get_poster_image(movie['id'])
             poster_path = f"poster/{movie['id']}.jpg"
             movie_details = movies_data.get(str(movie['id']))
-            print("hacHACB")
             try:
                 width, height, channels, data = dpg.load_image(poster_path)
                 texture_id = dpg.add_static_texture(width, height, data)

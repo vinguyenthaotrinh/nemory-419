@@ -147,8 +147,11 @@ def find_movie_ids_by_filters(genre, release_year, country):
     """
     # Lấy danh sách ID từ từng điều kiện
     genre_ids = set(find_movie_ids_by_genre(genre))
+    # print(genre_ids)
     year_ids = set(find_movie_ids_by_year(release_year))
+    # print(year_ids)
     country_ids = set(find_movie_ids_by_country(country))
+    # print(country_ids)
 
     # Tìm giao nhau của các danh sách ID
     intersect_ids = genre_ids & year_ids & country_ids
@@ -164,12 +167,8 @@ if __name__ == "__main__":
     load_data(genres_file, movies_file, country_file, releases_file)
 
     m, C = calculate_c_and_m()
-    movie_ids = find_movie_ids_by_filters("action", "2010", "")[:5]
+    movies = find_movie_ids_by_filters("Genre", "Release Year", "Country")
+    movies = get_movies_information_from_ids(movies)
+    movies = sort_by_popularity(movies, 10)
     
-    movies_genre = get_movies_information_from_ids(movie_ids)
-
-    # Bước 2: Lấy thông tin và sắp xếp
-    print("\nTop phim theo thể loại và điểm số:")
-    top_movies = sort_by_release_date(movies_genre)
-    for movie in top_movies:
-        print(movie)
+    
