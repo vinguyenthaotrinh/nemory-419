@@ -148,7 +148,9 @@ def find_movie_ids_by_filters(genre, release_year, country):
     # Lấy danh sách ID từ từng điều kiện
     genre_ids = set(find_movie_ids_by_genre(genre))
     # print(genre_ids)
-    year_ids = set(find_movie_ids_by_year(release_year))
+    year_ids = set()
+    for i in range(10):
+        year_ids = year_ids | set(find_movie_ids_by_year(release_year[:-2] + str(i)))
     # print(year_ids)
     country_ids = set(find_movie_ids_by_country(country))
     # print(country_ids)
