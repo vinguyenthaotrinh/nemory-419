@@ -42,6 +42,8 @@ with dpg.value_registry():
 
 def switch_ui(hide_ui, show_ui):
     dpg.hide_item(hide_ui)  
+    if show_ui == "Primary Window":
+        reset_primary_window()
     dpg.show_item(show_ui)  
 
 def top_movie():
@@ -241,6 +243,15 @@ def show_movie_details(sender, app_data, user_data):
     except Exception as e:
         print(f"Error creating movie details group: {e}")
     switch_ui(current_ui, "DetailUI")
+
+def reset_primary_window():
+    # Reset các dropdown về giá trị mặc định
+    dpg.set_value(dropdown_genre, "Select Genre")
+    dpg.set_value(dropdown_country, "Select Country")
+    dpg.set_value(dropdown_year, "Select Year")
+    
+    # Reset giá trị của search input
+    dpg.set_value("SearchInput", "")
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -505,14 +516,14 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     dpg.bind_item_theme(dropdown_country, dropdown_theme) 
 
     with dpg.group(pos=(700, 90), width = 150, height = 100):
-        dropdown_country = dpg.add_combo(
+        dropdown_year = dpg.add_combo(
             items=year, 
             callback=dropdown_callback,
             user_data= "year", 
             default_value="Select Year"
         )
-    dpg.bind_item_font(dropdown_country, buttonFont)
-    dpg.bind_item_theme(dropdown_country, dropdown_theme)  
+    dpg.bind_item_font(dropdown_year, buttonFont)
+    dpg.bind_item_theme(dropdown_year, dropdown_theme)  
 
     dpg.add_input_text(tag="SearchInput", hint="Input here...", pos=(450,30), width=420, height=40, multiline=True)
     dpg.bind_item_theme("SearchInput", input_theme)
