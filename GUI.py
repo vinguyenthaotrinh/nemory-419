@@ -148,27 +148,25 @@ def filter_movies():
     #                    (year == "" or str(movie["year"]) == year)]
 
     #Ghép back sort by Popularity, Rating, Latest Movie
-    movies = search.search(keyword)
-    movie_ids = [movie['id'] for movie in movies] if isinstance(movies, list) else movies['id'].tolist()
-
-    print (movies)
-    print("ds")
-    filtered_ids = cs.find_movie_ids_by_filters(genre, country, year)
-    print(filtered_ids)
-    print("dhs")
-    final_movie_ids = set(movie_ids).intersection(filtered_ids)
-    print(final_movie_ids)
-    print ("hfehdcjd")
+    movie_ids = cs.find_movie_ids_by_filters(genre, year, country)
+    if (keyword != ""):
+        movies = search.search(keyword)
+        movie_ids = (
+            [str(movie['id']) for movie in movies] if isinstance(movies, list) 
+            else list(map(str, movies['id'].tolist()))
+        )
+    
+    filtered_ids = cs.find_movie_ids_by_filters(genre, year, country)
+    final_movie_ids = set(filtered_ids).intersection(movie_ids)
 
     movies = cs.get_movies_information_from_ids(final_movie_ids)
-    movies = cs.sort_by_popularity(movies, 10)
 
-    # if sort_by == "Popularity":
-    #     movies = sorted(movies, key=lambda x: x['popularity'], reverse=True)
-    # elif sort_by == "Rating":
-    #     movies = sorted(movies, key=lambda x: x['vote_average'], reverse=True)
-    # elif sort_by == "Latest Movie":
-    #     movies = sorted(movies, key=lambda x: x['release_date'], reverse=True)
+    if sort_by == "Popularity":
+        movies = cs.sort_by_popularity(movies, 10)
+    elif sort_by == "Rating":
+        movies = cs.sort_movies_by_score(movies, 10)
+    elif sort_by == "Latest Movie":
+        movies = cs.sort_by_release_date(movies, 10)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("Movie_list"):
