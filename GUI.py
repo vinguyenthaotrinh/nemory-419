@@ -2,7 +2,9 @@ import os
 import dearpygui.dearpygui as dpg
 import find_by_genre as fbg
 import getposter as gp
-import all_field_keyword_search as search
+import all_field_keyword_search as afks
+import semantics_overview as so
+import title_search as ts
 import json
 import category_search as cs
 
@@ -152,7 +154,7 @@ def filter_movies():
     #Ghép back sort by Popularity, Rating, Latest Movie
     movie_ids = cs.find_movie_ids_by_filters(genre, year, country)
     if (keyword != ""):
-        movies = search.search(keyword)
+        movies = afks.keyword_search(keyword)
         movie_ids = (
             [str(movie['id']) for movie in movies] if isinstance(movies, list) 
             else list(map(str, movies['id'].tolist()))
@@ -324,16 +326,18 @@ def search_movies(sender, app_data, user_data):
     current_state["filters"] = {"genre": None, "country": None, "year": None}
 
     # Gọi hàm search và nhận kết quả
-    top_movies = search.search(user_query) #nhớ comment cái nàyy sau khi ghép back
     if search_type == "Title":
-        print ("Ghep back title do ne")
+        print ("title search")
+        print(user_data)
+        top_movies = ts.title_search(user_query)
     elif search_type == "Keyword":
-        print ("Ghep back keyword do ne")
+        print("keyword search")
+        top_movies = afks.keyword_search(user_query)
     elif search_type == "Semantic":
-        print ("Ghep back Semantic do ne")
+        print ("semantic")
+        top_movies = so.search(user_query)
 
-
-
+    print(top_movies)
     if not user_query.strip():
         print("Please enter a search query.")
         return
@@ -356,6 +360,7 @@ def search_movies(sender, app_data, user_data):
     with dpg.texture_registry(tag="MovieTextureRegistry") as reg_id:
         row = None  # Container for a row of movies
         for idx, (_, row_data) in enumerate(top_movies.iterrows()):  # Iterate over DataFrame rows
+            print(row_data)
             movie = {
                 "title": row_data["title"],
                 "id": row_data["id"],
@@ -403,12 +408,17 @@ def search_movies1(sender, app_data, user_data):
 
     
     if search_type == "Title":
-        print ("Ghep back title do ne")
+        print ("title search")
+        print(user_data)
+        top_movies = ts.title_search(user_query)
     elif search_type == "Keyword":
-        print ("Ghep back keyword do ne")
+        print("keyword search")
+        top_movies = afks.keyword_search(user_query)
     elif search_type == "Semantic":
-        print ("Ghep back Semantic do ne")
-
+        print ("semantic")
+        top_movies = so.search(user_query)
+        print(top_movies)
+        
     print(user_query)
     if not user_query.strip():
         print("Please enter a search query.")
@@ -422,7 +432,7 @@ def search_movies1(sender, app_data, user_data):
         dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
 
     # Gọi hàm search và nhận kết quả
-    top_movies = search.search(user_query)
+ #   top_movies = search.search(user_query)
 
     if not dpg.does_item_exist("Movie_list"):
         print("Error: 'Movie_list' does not exist!")

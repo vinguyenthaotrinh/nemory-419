@@ -33,7 +33,7 @@ def save_embeddings():
     merged_df['embedding'] = list(model.encode(merged_df['combined_features'].tolist(), show_progress_bar=True))
     # Save embeddings and DataFrame to a file
     with open("movie_embeddings.pkl", "wb") as f:
-        pickle.dump(merged_df[['title', 'overview', 'release_date', 'keywords', 'genres', 'cast', 'embedding']], f)
+        pickle.dump(merged_df[['title', 'id', 'vote_average', 'overview', 'release_date', 'keywords', 'genres', 'cast', 'embedding']], f)
     print("Embeddings saved!")
 
 # Function to load embeddings
@@ -49,6 +49,7 @@ try:
 except FileNotFoundError:
     save_embeddings()
 
+print(merged_df)
 # Search function using Sentence Transformers
 def search(user_query):
     query_embedding = model.encode(user_query)
@@ -66,6 +67,7 @@ def search(user_query):
     if not top_movies.empty:
         print(f"Found {len(top_movies)} result(s):")
         for _, row in top_movies.iterrows():
+            #print(row)
             print(f"Title: {row['title']}")
             print(f"Overview: {row['overview']}")
             print(f"Release Date: {row['release_date']}")
@@ -100,7 +102,8 @@ def search(user_query):
         
     return top_movies
 
+    
 # Run the search function
-# if __name__ == '__main__':
-#     user_query = input("Enter your search query: ")
-#     search(user_query)
+if __name__ == '__main__':
+    # user_query = input("Enter your search query: ")
+    search("spider")
