@@ -12,18 +12,21 @@ current_ui = "Primary Window"
 cs.load_data("dataset/genres_inverted.json", "dataset/movies.json", "dataset/production_countries_inverted.json", "dataset/release_year_inverted.json")
 
 genres = [
+    "Select Genre",
     "Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller",
     "Animation", "Family", "Western", "Comedy", "Romance", "Horror", "Mystery",
     "History", "War", "Music", "Documentary", "Foreign", "Tv movie"
 ]
 
 countries = [
+    "Select Country",
     "United States of America", "United Kingdom", "Jamaica", "Bahamas", "Dominica", "Czech Republic", "Poland",
     "Slovenia", "New Zealand", "Germany", "Italy", "Malta", "Australia", "France",
     "Belgium"
 ]
 
 year = [
+    "Select Year",
     "2024", "2023", "2022", "2021", "2020", "2019"
 ]
 
@@ -176,6 +179,10 @@ def filter_movies():
 
 
 def on_select(sender, app_data):
+    if app_data.startswith("Select"):
+        selected_value = None
+    else:
+        selected_value = app_data
     dpg.set_value(sender, app_data)
 
 # Hàm hiển thị giao diện chi tiết phim
@@ -476,7 +483,7 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
             items=genres, 
             callback=dropdown_callback,
             user_data= "genre", 
-            default_value="Genre",
+            default_value="Select Genre",
 
         )
     dpg.bind_item_font(dropdown_genre, buttonFont)
@@ -487,7 +494,7 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
             items=countries, 
             callback=dropdown_callback,
             user_data= "country", 
-            default_value="Country"
+            default_value="Select Country"
         )
     dpg.bind_item_font(dropdown_country, buttonFont)
     dpg.bind_item_theme(dropdown_country, dropdown_theme) 
@@ -497,7 +504,7 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
             items=year, 
             callback=dropdown_callback,
             user_data= "year", 
-            default_value="Release Year"
+            default_value="Select Year"
         )
     dpg.bind_item_font(dropdown_country, buttonFont)
     dpg.bind_item_theme(dropdown_country, dropdown_theme)  
@@ -531,7 +538,8 @@ with dpg.window(label="Search", tag="Search UI", show=False):
             items=genres, 
             source=genre_selected,
             callback=on_select,
-            user_data= "genre"
+            user_data= "genre",
+            default_value="Select Genre" 
         )
     dpg.bind_item_font(dropdown_genre2, buttonFont)
     dpg.bind_item_theme(dropdown_genre2, dropdown_theme)   
@@ -541,7 +549,8 @@ with dpg.window(label="Search", tag="Search UI", show=False):
             items=countries, 
             source=country_selected,
             callback=on_select,
-            user_data= "country"
+            user_data= "country",
+            default_value="Select Country" 
         )
     dpg.bind_item_font(dropdown_country2, buttonFont)
     dpg.bind_item_theme(dropdown_country2, dropdown_theme) 
@@ -551,7 +560,8 @@ with dpg.window(label="Search", tag="Search UI", show=False):
             items=year, 
             source=release_year_selected,
             callback=on_select,
-            user_data= "year"
+            user_data= "year",
+            default_value="Select Year" 
         )
     dpg.bind_item_font(dropdown_year2, buttonFont)
     dpg.bind_item_theme(dropdown_year2, dropdown_theme)  
