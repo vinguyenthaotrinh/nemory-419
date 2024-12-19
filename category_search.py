@@ -6,6 +6,7 @@ genres_data = None
 movies_data = None
 country_data = None
 releases_data = None
+m, C = None, None
 
 def load_data(genres_file, movies_file, country_file, releases_file):
     """
@@ -16,11 +17,12 @@ def load_data(genres_file, movies_file, country_file, releases_file):
         country_file (str): Path to country JSON file.
         releases_file (str): Path to releases JSON file.
     """
-    global genres_data, movies_data, country_data, releases_data
+    global genres_data, movies_data, country_data, releases_data, m, C
     genres_data = load_json(genres_file)
     movies_data = load_json(movies_file)
     country_data = load_json(country_file)
     releases_data = load_json(releases_file)
+    m, C = calculate_c_and_m()
     
 # --- Hàm đọc JSON ---
 def load_json(file_path):
@@ -35,7 +37,9 @@ def load_json(file_path):
         return None
 
 # --- Hàm tính điểm có trọng số ---
-def weighted_rank(vote_average, vote_count, m, C):
+def weighted_rank(vote_average, vote_count):
+    if (vote_count == 0 or vote_average == 0):
+        return 0
     return ((vote_count / (vote_count + m)) * vote_average) + ((m / (vote_count + m)) * C)
 
 # --- Hàm tính giá trị trung bình và ngưỡng m ---
@@ -54,9 +58,10 @@ def find_movie_ids_by_genre(genre):
     Tìm danh sách ID phim theo thể loại.
     Nếu genre rỗng, trả về tất cả các ID phim trong movies_data.
     """
-    if not genre:  # Nếu genre rỗng, trả về tất cả các phim
+    if not genre or genre == "Genre":  # Nếu genre rỗng, trả về tất cả các phim
         return list(movies_data.keys())
     
+    genre = genre.lower()
     if genre in genres_data:
         return genres_data[genre]
     else:
@@ -67,7 +72,7 @@ def find_movie_ids_by_year(release_year):
     Tìm danh sách ID phim theo năm phát hành.
     Nếu release_year rỗng, trả về tất cả các ID phim trong movies_data.
     """
-    if not release_year:  # Nếu release_year rỗng, trả về tất cả các phim
+    if not release_year or release_year == "Release Year":  # Nếu release_year rỗng, trả về tất cả các phim
         return list(movies_data.keys())
     
     return releases_data.get(release_year, [])
@@ -77,7 +82,7 @@ def find_movie_ids_by_country(country):
     Tìm danh sách ID phim theo quốc gia.
     Nếu country rỗng, trả về tất cả các ID phim trong movies_data.
     """
-    if not country:  # Nếu country rỗng, trả về tất cả các phim
+    if not country or country=="Country":  # Nếu country rỗng, trả về tất cả các phim
         return list(movies_data.keys())
     
     return country_data.get(country.lower(), [])
@@ -113,12 +118,12 @@ def get_movies_information_from_ids(movie_ids):
 
 
 # --- Sắp xếp phim theo điểm số ---
-def sort_movies_by_score(movies, m, C, top_n=10):
+def sort_movies_by_score(movies, top_n=10):
     results = []
     for movie in movies:
         vote_average = movie["vote_average"]
         vote_count = movie["vote_count"]
-        score = weighted_rank(vote_average, vote_count, m, C)
+        score = weighted_rank(vote_average, vote_count)
         movie["score"] = score
         results.append(movie)
 
@@ -127,12 +132,12 @@ def sort_movies_by_score(movies, m, C, top_n=10):
     return sorted_results[:top_n]
 
 # Function to sort by popularity (descending)
-def sort_by_popularity(movies):
-    return sorted(movies, key=lambda movie: -movie['popularity'])
+def sort_by_popularity(movies, top_n):
+    return sorted(movies, key=lambda movie: -movie['popularity'])[:top_n]
 
 # Function to sort by release date (ascending)
-def sort_by_release_date(movies):
-    return sorted(movies, key=lambda movie: datetime.strptime(movie['release_date'], '%Y-%m-%d'), reverse=True)
+def sort_by_release_date(movies, top_n):
+    return sorted(movies, key=lambda movie: datetime.strptime(movie['release_date'], '%Y-%m-%d'), reverse=True)[:top_n]
 
     
 def find_movie_ids_by_filters(genre, release_year, country):
