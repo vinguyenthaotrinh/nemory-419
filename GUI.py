@@ -4,10 +4,12 @@ import find_by_genre as fbg
 import getposter as gp
 import all_field as search
 import json
+import category_search as cs
 
 movies_file = "dataset/movies.json"
 movies_data = fbg.load_json(movies_file)
 current_ui = "Primary Window"
+cs.load_data("dataset/genres_inverted.json", "dataset/movies.json", "dataset/production_countries_inverted.json", "dataset/release_year_inverted.json")
 
 genres = [
     "Action", "Adventure", "Fantasy", "Science fiction", "Crime", "Drama", "Thriller",
@@ -38,9 +40,9 @@ def switch_ui(hide_ui, show_ui):
     dpg.show_item(show_ui)  
 
 def top_movie():
-    
-    movies = fbg.find_top_movies_by_genre('action')  # Lấy danh sách phim theo thể loại
-    #ghép back top movie vào movies = top movie ()
+    movies = cs.find_movie_ids_by_filters("", "", "")
+    movies = cs.get_movies_information_from_ids(movies)
+    movies = cs.sort_by_popularity(movies, 10)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("TopMovie_list"):
@@ -123,6 +125,10 @@ def filter_movies():
     #                    (year == "" or str(movie["year"]) == year)]
 
     #Ghép back sort by Popularity, Rating, Lastest Movie
+    
+    movies = cs.find_movie_ids_by_filters(genre, country, year)
+    movies = cs.get_movies_information_from_ids(movies)
+    movies = cs.sort_by_popularity(movies, 10)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("Movie_list"):
