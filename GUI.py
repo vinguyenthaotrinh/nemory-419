@@ -74,7 +74,7 @@ def top_movie():
                 except Exception as e:
                     print(f"Could not load image {poster_path}: {e}")
     else:
-        dpg.add_text(f"Không có top phim", parent="TopMovie_list")
+        dpg.add_text(f"No top movies found", parent="TopMovie_list")
 
 def center_text_in_window(window_width, text_tag, text, font_size):
     
@@ -155,7 +155,7 @@ def filter_movies():
                 except Exception as e:
                     print(f"Could not load image {poster_path}: {e}")
     else:
-        dpg.add_text(f"Không tìm thấy phim nào", parent="Movie_list")
+        dpg.add_text(f"No matching movies found", parent="Movie_list")
 
 
 
@@ -234,7 +234,7 @@ def search_movies(sender, app_data, user_data):
 
     # Check if top_movies is valid
     if top_movies is None or top_movies.empty:
-        dpg.add_text("Không tìm thấy phim nào", parent="Movie_list")
+        dpg.add_text("No matching movies found", parent="Movie_list")
         return
 
     # Display movies with posters and details
@@ -334,7 +334,7 @@ def search_movies1(sender, app_data, user_data):
 
     # Check if top_movies is valid
     if top_movies is None or top_movies.empty:
-        dpg.add_text("Không tìm thấy phim nào", parent="Movie_list")
+        dpg.add_text("No matching movies found", parent="Movie_list")
         return
 
     # Display movies with posters and details
