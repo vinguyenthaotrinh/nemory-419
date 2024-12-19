@@ -22,19 +22,38 @@ def load_data(genres_file, movies_file, country_file, releases_file):
     movies_data = load_json(movies_file)
     country_data = load_json(country_file)
     releases_data = load_json(releases_file)
+    
+    for movie_id, movie_data in movies_data.items():
+        movie_data["keywords"] = convert_to_dict_if_needed(movie_data.get("keywords"))
+    movie_data["production_companies"] = convert_to_dict_if_needed(movie_data.get("production_companies"))
+    movie_data["cast"] = convert_to_dict_if_needed(movie_data.get("cast"))
+
     m, C = calculate_c_and_m()
     
 # --- Hàm đọc JSON ---
 def load_json(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
-            return json.load(file)
+            # Đọc toàn bộ nội dung file dưới dạng chuỗi
+            json_string = file.read()
+            # Giải mã chuỗi JSON thành đối tượng Python
+            return json.loads(json_string)
     except FileNotFoundError:
         print(f"Không tìm thấy file: {file_path}")
         return None
     except json.JSONDecodeError:
         print(f"Lỗi khi đọc file JSON: {file_path}")
         return None
+    
+# Hàm chuyển đổi chuỗi JSON thành dict nếu cần
+def convert_to_dict_if_needed(value):
+    if isinstance(value, str):  # Kiểm tra nếu giá trị là chuỗi
+        try:
+            return json.loads(value)  # Chuyển đổi chuỗi thành dict
+        except json.JSONDecodeError:
+            pass  # Bỏ qua nếu chuỗi không phải định dạng JSON hợp lệ
+    return value  # Trả về giá trị ban đầu nếu không cần chuyển đổi
+
 
 # --- Hàm tính điểm có trọng số ---
 def weighted_rank(vote_average, vote_count):
@@ -94,13 +113,32 @@ def get_movie_information(movie_id):
     """
     movie_details = movies_data.get(str(movie_id))
     if movie_details:
+        production_companies = movie_details.get("production_companies", [])
+        if isinstance(production_companies, str):
+            production_companies = json.loads(production_companies)
+
+        keywords = movie_details.get("keywords", [])
+        if isinstance(keywords, str):
+            keywords = json.loads(keywords)
+
+        cast = movie_details.get("cast", [])
+        if isinstance(cast, str):
+            cast = json.loads(cast)
+        
+        production_companies = [pc['name'] for pc in production_companies if isinstance(pc, dict)]
+        keywords = [kw['name'] for kw in keywords if isinstance(kw, dict)]
+        cast = [member['name'] for member in cast if isinstance(member, dict)]
+
         return {
             "id": movie_id,
             "title": movie_details.get("title", "Unknown"),
             "vote_average": movie_details.get("vote_average", 0),
             "vote_count": movie_details.get("vote_count", 0),
             "popularity": movie_details.get("popularity", 0),
-            "release_date": movie_details.get("release_date", "")
+            "release_date": movie_details.get("release_date", ""),
+            "production_company": ', '.join(i for i in production_companies),
+            "keywords": ', '.join(i for i in keywords),
+            "cast": ', '.join(i for i in cast)
         }
     return None
 
@@ -174,8 +212,10 @@ if __name__ == "__main__":
     load_data(genres_file, movies_file, country_file, releases_file)
 
     m, C = calculate_c_and_m()
-    movies = find_movie_ids_by_filters("Genre", "Release Year", "Country")
-    movies = get_movies_information_from_ids(movies)
-    movies = sort_by_popularity(movies, 10)
+    # movies = find_movie_ids_by_filters("Genre", "Release Year", "Country")
+    # movies = get_movies_information_from_ids(movies)
+    # movies = sort_by_popularity(movies, 10)
+    print(get_movie_information(862))
+    
     
     
