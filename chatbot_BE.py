@@ -8,21 +8,18 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from gpt4all import GPT4All
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import PromptTemplate
 from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 
 from langchain_core.language_models.llms import LLM
 from typing import Any, Dict, List, Mapping, Optional
 
-from langchain.memory import ConversationBufferMemory
-from langchain_core.runnables import RunnablePassthrough, RunnableSequence
+from langchain_core.runnables import RunnablePassthrough
 
 # --- Cấu hình ---
 CSV_FILE = "model_gpt/movie_data.csv"
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 PERSIST_DIRECTORY = "model_gpt/db"
-# MODEL_DOWNLOAD = "orca-mini-3b-gguf2-q4_0.gguf"
-# MODEL_DOWNLOAD = "Phi-3-mini-4k-instruct.Q4_0.gguf"
 MODEL_DOWNLOAD = "Llama-3.2-1B-Instruct-Q4_0.gguf"  # Changed model
 MODEL_PATH_CACHE = "model_gpt"
 
@@ -76,6 +73,12 @@ else:
     collection = client.get_collection(name=collection_name)
     print("Vector store loaded.")
 
+# --- Tải model GPT4All ---
+if not os.path.exists(os.path.join(MODEL_PATH_CACHE, MODEL_DOWNLOAD)):
+    print("Downloading model...")
+    GPT4All.download_model(MODEL_DOWNLOAD, model_path=MODEL_PATH_CACHE)
+    print("Model downloaded!")
+
 # --- Custom LLM ---
 class CustomGPT4All(LLM):
     model: Any
@@ -125,7 +128,7 @@ db = Chroma(
 retriever = db.as_retriever(search_kwargs={"k": 3})
 
 # --- Prompt Template for Llama-3 ---
-template = """<|start_header_id|>user<|end_header_id|>\n\nShort answer based on the following context: {context}
+template = """<|start_header_id|>user<|end_header_id|>\n\nAnswer the question based on the following context: {context}
 Question: {question}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"""
 prompt = PromptTemplate(input_variables=["context", "question"], template=template)
 
@@ -139,18 +142,22 @@ rag_chain = (
     | llm
 )
 
-print("Chatbot: Hello! I'm a movie chatbot. What do you want to know about movies?")
-while True:
-    query = input("You: ")
-    if query.lower() == "quit":
-        break
-
+def get_chatbot_response(query, chat_history):
     start_time = time.time()
-
     result = rag_chain.invoke(query)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    
+    chat_history.append((query, result))
+    return result, elapsed_time
 
+def get_clarification_response(query, clarification, chat_history):
+    new_query = f"{query}\nUser clarification: {clarification}"
+    
+    start_time = time.time()
+    result = rag_chain.invoke(new_query)
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    print("Chatbot:", result)
-    print(f"Time taken to generate response: {elapsed_time:.2f} seconds")
+    chat_history.append((query, result))
+    return result, elapsed_time
