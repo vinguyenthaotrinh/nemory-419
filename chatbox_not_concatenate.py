@@ -24,7 +24,8 @@ def initialize_search_engine(movies):
     # Combine relevant fields for searching
     movies['combined'] = (
         movies['title'].fillna('') + ' ' + 
-        movies['overview'].fillna('')
+        movies['overview'].fillna('') +
+        movies['genre'].fillna('')
     )
     vectorizer = TfidfVectorizer(stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(movies['combined'])

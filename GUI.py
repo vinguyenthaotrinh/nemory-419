@@ -81,7 +81,7 @@ def top_movie():
                 except Exception as e:
                     print(f"Could not load image {poster_path}: {e}")
     else:
-        dpg.add_text(f"Không có top phim", parent="TopMovie_list")
+        dpg.add_text(f"No top movies found", parent="TopMovie_list")
 
 def center_text_in_window(window_width, text_tag, text, font_size):
     
@@ -123,7 +123,7 @@ def filter_movies():
         dpg.add_text(display_text, tag="filter_text", parent="Search_UI", color=(255, 255, 255))
 
     
-    movies = fbg.find_top_movies_by_genre("action")  # Lấy danh sách phim theo thể loại
+    # movies = fbg.find_top_movies_by_genre("action")  # Lấy danh sách phim theo thể loại
     #ghép back filter vào movies = filter (genre, country, year)
     # filtered_movies = [movie for movie in movies if
     #                    (genre == "" or movie["genre"] == genre) and
@@ -132,7 +132,9 @@ def filter_movies():
 
     #Ghép back sort by Popularity, Rating, Lastest Movie
     
-    movies = cs.find_movie_ids_by_filters(genre, country, year)
+    print("GHJK")
+    print(genre, year, country)
+    movies = cs.find_movie_ids_by_filters(genre, year, country)
     movies = cs.get_movies_information_from_ids(movies)
     movies = cs.sort_by_popularity(movies, 10)
 
@@ -174,7 +176,7 @@ def filter_movies():
                 except Exception as e:
                     print(f"Could not load image {poster_path}: {e}")
     else:
-        dpg.add_text(f"Không tìm thấy phim nào", parent="Movie_list")
+        dpg.add_text(f"No matching movies found", parent="Movie_list")
 
 
 
@@ -203,7 +205,6 @@ def show_movie_details(sender, app_data, user_data):
             gp.get_poster_image(movie['id'])
             poster_path = f"poster/{movie['id']}.jpg"
             movie_details = movies_data.get(str(movie['id']))
-            print("hacHACB")
             try:
                 width, height, channels, data = dpg.load_image(poster_path)
                 texture_id = dpg.add_static_texture(width, height, data)
@@ -257,7 +258,7 @@ def search_movies(sender, app_data, user_data):
 
     # Check if top_movies is valid
     if top_movies is None or top_movies.empty:
-        dpg.add_text("Không tìm thấy phim nào", parent="Movie_list")
+        dpg.add_text("No matching movies found", parent="Movie_list")
         return
 
     # Display movies with posters and details
@@ -330,7 +331,7 @@ def search_movies1(sender, app_data, user_data):
 
     # Check if top_movies is valid
     if top_movies is None or top_movies.empty:
-        dpg.add_text("Không tìm thấy phim nào", parent="Movie_list")
+        dpg.add_text("No matching movies found", parent="Movie_list")
         return
 
     # Display movies with posters and details
