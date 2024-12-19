@@ -152,17 +152,7 @@ while True:
 
     start_time = time.time()
     
-    # Use only the last 2 turns of chat history as context
-    if len(chat_history) > 1:
-        context = "\n".join([f"User: {q}\nChatbot: {a}" for q, a in chat_history[-2:]])
-        full_query = f"Previous conversation:\n{context}\n\nNew question: {query}"
-    elif len(chat_history) > 0:
-        context = "\n".join([f"User: {q}\nChatbot: {a}" for q, a in chat_history])
-        full_query = f"Previous conversation:\n{context}\n\nNew question: {query}"
-    else:
-        full_query = query
-    
-    result = rag_chain.invoke(full_query)
+    result = rag_chain.invoke(query)
     
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -177,18 +167,13 @@ while True:
             chat_history.append((query, result))
             break
         else:
-            clarification = input("Chatbot: Could you please specify what information you're looking for? ")
+            print("Chatbot: Could you please specify what information you're looking for? ")
+            clarification = input("You: ")
             new_query = f"Original question: {query}\nUser clarification: {clarification}"
 
             start_time = time.time()
-            # Combine new query with previous context for a more comprehensive search
-            if len(chat_history) > 0:
-                context = "\n".join([f"User: {q}\nChatbot: {a}" for q, a in chat_history[-2:]])
-                full_query = f"Previous conversation:\n{context}\n\n{new_query}"
-            else:
-                full_query = new_query
             
-            result = rag_chain.invoke(full_query)
+            result = rag_chain.invoke(new_query)
             
             end_time = time.time()
             elapsed_time = end_time - start_time
