@@ -27,7 +27,7 @@ countries = [
 
 year = [
     "Select Year",
-    "2024", "2023", "2022", "2021", "2020", "2019", "2002"
+    '1910s', '1920s', '1930s', '1940s', '1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'
 ]
 
 current_state = {
@@ -42,9 +42,9 @@ current_state = {
 dpg.create_context()
 
 with dpg.value_registry():
-    genre_selected = dpg.add_string_value(default_value="Genre")
-    country_selected = dpg.add_string_value(default_value="Country")
-    release_year_selected = dpg.add_string_value(default_value="Release Year")
+    genre_selected = dpg.add_string_value(default_value="Select Genre")
+    country_selected = dpg.add_string_value(default_value="Select Country")
+    release_year_selected = dpg.add_string_value(default_value="Select Year")
     sort_selected = dpg.add_string_value(default_value="Sort by")
 
     
@@ -124,12 +124,13 @@ def filter_movies():
 
     # Tạo chuỗi điều kiện hiển thị
     conditions = []
-    if genre != "Genre":
+    if genre != "Select Genre":
         conditions.append(f"{genre.lower()}")
-    if country != "Country":
+    if country != "Select Country":
         conditions.append(f"country {country}")
-    if year != "Release Year":
+    if year != "Select Year":
         conditions.append(f"year {year}")
+    print(conditions)
 
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
@@ -159,7 +160,9 @@ def filter_movies():
     filtered_ids = cs.find_movie_ids_by_filters(genre, year, country)
     final_movie_ids = set(filtered_ids).intersection(movie_ids)
 
+    
     movies = cs.get_movies_information_from_ids(final_movie_ids)
+    movies = cs.sort_by_popularity(movies, 10)
 
     if sort_by == "Popularity":
         movies = cs.sort_by_popularity(movies, 10)
@@ -167,6 +170,7 @@ def filter_movies():
         movies = cs.sort_movies_by_score(movies, 10)
     elif sort_by == "Latest Movie":
         movies = cs.sort_by_release_date(movies, 10)
+    
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("Movie_list"):

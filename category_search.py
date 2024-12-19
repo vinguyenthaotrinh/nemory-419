@@ -139,8 +139,15 @@ def sort_by_popularity(movies, top_n):
 def sort_by_release_date(movies, top_n):
     return sorted(movies, key=lambda movie: datetime.strptime(movie['release_date'], '%Y-%m-%d'), reverse=True)[:top_n]
 
+def find_movie_ids_by_decade(decade):
+    if not decade or decade == "Release Year" or decade == "Select Year":  # Nếu release_year rỗng, trả về tất cả các phim
+        return list(movies_data.keys())
+    year_ids = set()
+    for i in range(10):
+       year_ids = year_ids | set(find_movie_ids_by_year(decade[:-2] + str(i)))
+    return year_ids
     
-def find_movie_ids_by_filters(genre, release_year, country):
+def find_movie_ids_by_filters(genre, decade, country):
     """
     Tìm các ID phim dựa trên genre, release_year và country.
     Trả về danh sách các ID phim giao nhau từ các điều kiện.
@@ -148,11 +155,8 @@ def find_movie_ids_by_filters(genre, release_year, country):
     # Lấy danh sách ID từ từng điều kiện
     genre_ids = set(find_movie_ids_by_genre(genre))
     # print(genre_ids)
-    #year_ids = set()
-    #for i in range(10):
-    #    year_ids = year_ids | set(find_movie_ids_by_year(release_year[:-2] + str(i)))
-    # print(year_ids)
-    year_ids = set(find_movie_ids_by_year(release_year))
+    year_ids = set(find_movie_ids_by_decade(decade))
+    
     country_ids = set(find_movie_ids_by_country(country))
     # print(country_ids)
 
