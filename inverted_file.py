@@ -13,7 +13,8 @@ inverted_index = {
     "production_countries": defaultdict(list),
     "spoken_languages": defaultdict(list),
     "cast": defaultdict(list),
-    "crew": defaultdict(list)
+    "crew": defaultdict(list),
+    "release_year": defaultdict(list)  # New inverted index for release year
 }
 
 # Populate the inverted index dictionaries
@@ -38,13 +39,8 @@ for movie_id, movie_data in movies_dict.items():
             name = cast_entry.get("name")
             character = cast_entry.get("character")
             if cast_id is not None and name and character:
-                # Create the composite key for cast
                 cast_key = name.lower()
-                # Check if an entry for the same composite key and movie_id exists; if not, add it
-                if not any(
-                    entry['movie_id'] == movie_id and entry['character'] == character
-                    for entry in inverted_index["cast"][cast_key]
-                ):
+                if not any(entry['movie_id'] == movie_id and entry['character'] == character for entry in inverted_index["cast"][cast_key]):
                     inverted_index["cast"][cast_key].append({
                         "movie_id": movie_id,
                         "character": character
@@ -60,7 +56,6 @@ for movie_id, movie_data in movies_dict.items():
             department = crew_member.get("department")
             job = crew_member.get("job")
             if name and crew_id is not None and gender is not None:
-                # Create the composite key for crew
                 crew_key = name.lower()
                 inverted_index["crew"][crew_key].append({
                     "gender": gender,
@@ -68,6 +63,19 @@ for movie_id, movie_data in movies_dict.items():
                     "department": department,
                     "job": job
                 })
+
+    # Process 'release_date' field to extract the year, checking for missing or invalid dates
+    if movie_data["release_date"]:
+        release_date = movie_data["release_date"]
+        # Check for valid date format (dd/mm/yyyy)
+        if isinstance(release_date, str):
+            try:
+                release_year = release_date.split("-")[0]  # Extract the year part
+                inverted_index["release_year"][release_year].append(movie_id)
+            except IndexError:
+                pass  # Handle invalid date format
+        else:
+            print(f"Invalid release date format for movie_id {movie_id}: {release_date}")
 
 # Save each inverted index to a JSON file
 for field, index in inverted_index.items():
