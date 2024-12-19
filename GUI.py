@@ -129,6 +129,9 @@ def filter_movies():
     #                    (year == "" or str(movie["year"]) == year)]
 
     #Ghép back sort by Popularity, Rating, Lastest Movie
+
+    print(sort_by)
+    print("sort")
     
     print(genre)
     movies = cs.find_movie_ids_by_filters(genre, country, year)
@@ -572,6 +575,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
         dropdown_sortby = dpg.add_combo(
             items= ["Popularity", "Rating", "Lastes Movie"], 
             default_value="Sort by",
+            source=sort_selected,
             callback=on_select,
             user_data= "other"
         )
