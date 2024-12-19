@@ -31,6 +31,7 @@ year = [
 ]
 
 current_state = {
+    "search_type": "",
     "keyword": "",
     "filters": {
         "genre": None,
@@ -253,8 +254,38 @@ def show_movie_details(sender, app_data, user_data):
                         dpg.bind_item_font(overView, detailText)
                         dpg.add_spacer(width=10)
 
+                        dpg.add_text("Production Companies:", color=(255, 255, 255), indent=30)
+                        companies_data = movie_details.get('production_companies', '[]')
+                        try:
+                            companies_list = json.loads(companies_data)  
+                            for company in companies_list:
+                                company_name = company.get('name', 'Unknown Company')
+                                company_item = dpg.add_text(f"- {company_name}", color=(200, 200, 200), indent=50)
+                                dpg.bind_item_font(company_item, detailText)
+                        except json.JSONDecodeError:
+                            dpg.add_text("Company information is not available.", color=(200, 200, 200), indent=50)
+
+                        dpg.add_spacer(width=10)
+
                         rating = dpg.add_text(f"Rating: {movie_details.get('vote_average', 'N/A')}", color=(255, 255, 255), indent=30)
                         dpg.bind_item_font(rating, detailText)
+
+                        dpg.add_text("Cast:", color=(255, 255, 255), indent=30)
+                        cast_data = movie_details.get('cast', '[]')
+                        try:
+                            cast_list = json.loads(cast_data)  
+                            for cast_member in cast_list[:10]:  
+                                actor_name = cast_member.get('name', 'Unknown Actor')
+                                character_name = cast_member.get('character', 'Unknown Character')
+                                cast_text = f"- {actor_name} as {character_name}"
+                                cast_item = dpg.add_text(cast_text, color=(200, 200, 200), indent=50)
+                                dpg.bind_item_font(cast_item, detailText)
+                        except json.JSONDecodeError:
+                            dpg.add_text("Cast information is not available.", color=(200, 200, 200), indent=50)
+
+                        
+            
+
 
             except Exception as e:
                 dpg.add_text(f"Poster not available: {e}")
@@ -285,15 +316,27 @@ def reset_search_ui():
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput")
+    search_type = dpg.get_value("SearchTypeDropdown")
+
     current_state["keyword"] = user_query
+    current_state["search_type"] = search_type
+
     current_state["filters"] = {"genre": None, "country": None, "year": None}
+
+    # Gọi hàm search và nhận kết quả
+    top_movies = search.search(user_query) #nhớ comment cái nàyy sau khi ghép back
+    if search_type == "Title":
+        print ("Ghep back title do ne")
+    elif search_type == "Keyword":
+        print ("Ghep back keyword do ne")
+    elif search_type == "Semantic":
+        print ("Ghep back Semantic do ne")
+
+
 
     if not user_query.strip():
         print("Please enter a search query.")
         return
-
-    # Gọi hàm search và nhận kết quả
-    top_movies = search.search(user_query)
 
     if not dpg.does_item_exist("Movie_list"):
         print("Error: 'Movie_list' does not exist!")
@@ -353,7 +396,18 @@ def search_movies(sender, app_data, user_data):
 def search_movies1(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput1")
+    search_type = dpg.get_value("SearchTypeDropdown")
+
     current_state["keyword"] = user_query
+    current_state["search_type"] = search_type
+
+    
+    if search_type == "Title":
+        print ("Ghep back title do ne")
+    elif search_type == "Keyword":
+        print ("Ghep back keyword do ne")
+    elif search_type == "Semantic":
+        print ("Ghep back Semantic do ne")
 
     print(user_query)
     if not user_query.strip():
@@ -530,8 +584,7 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     with dpg.group(pos=(300, 50), width = 150, height = 100):
         dropdown_search = dpg.add_combo(
             items=["Title", "Keyword", "Semantic"], 
-            callback=dropdown_callback,
-            user_data= "genre", 
+            tag= "SearchTypeDropdown", 
             default_value="Title",
 
         )
