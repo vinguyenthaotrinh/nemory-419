@@ -39,25 +39,19 @@ merged_df = merged_df.rename(columns={'title_x': 'title'})  # Assuming 'title_x'
 
 # Prepare the combined features
 merged_df['combined_features'] = (
-    # merged_df['overview'].fillna('') + ' ' +
-    # merged_df['genres'].fillna('') + ' ' +
-    # merged_df['keywords'].fillna('') + ' ' +
-    # merged_df['cast'].fillna('') + ' ' +
-    # merged_df['crew'].fillna('') + ' ' +
-    # merged_df['production_companies'].fillna('') + ' ' +
-    # merged_df['production_countries'].fillna('') + ' ' +
-    # merged_df['spoken_languages'].fillna('') + ' ' +
-    # merged_df['tagline'].fillna('') + ' ' +
-    # merged_df['original_language'].fillna('') + ' '+
-    # merged_df['release_date'].fillna('') + ' ' +
-    # merged_df['popularity'].fillna(0).astype(str) + ' ' +
-    # merged_df['vote_average'].fillna(0).astype(str) + ' ' +
-    # merged_df['vote_count'].fillna(0).astype(str) + ' ' +
-    # merged_df['budget'].fillna(0).astype(str) + ' ' +
-    # merged_df['revenue'].fillna(0).astype(str) + ' ' +
-    # merged_df['runtime'].fillna(0).astype(str) + ' ' +
-    # merged_df['status'].fillna('') + ' ' +
-    # merged_df['homepage'].fillna('').astype(str) + ' ' +
+    merged_df['overview'].fillna('') + ' ' +
+    merged_df['genres'].fillna('') + ' ' +
+    merged_df['keywords'].fillna('') + ' ' +
+    merged_df['cast'].fillna('') + ' ' +
+    merged_df['crew'].fillna('') + ' ' +
+    merged_df['production_companies'].fillna('') + ' ' +
+    merged_df['production_countries'].fillna('') + ' ' +
+    merged_df['release_date'].fillna('') + ' ' +
+    merged_df['popularity'].fillna(0).astype(str) + ' ' +
+    merged_df['vote_average'].fillna(0).astype(str) + ' ' +
+    merged_df['vote_count'].fillna(0).astype(str) + ' ' +
+    merged_df['runtime'].fillna(0).astype(str) + ' ' +
+    merged_df['homepage'].fillna('').astype(str) + ' ' +
     merged_df['title'].fillna('')
 )
 
