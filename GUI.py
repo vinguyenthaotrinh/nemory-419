@@ -103,7 +103,7 @@ def top_movie():
                     with dpg.group(parent=row, horizontal=False):
                         dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
                         dpg.add_spacer(width=25)
-                        titletext = dpg.add_text(f"{movie['title']} ({movie['vote_average']})", wrap=110)
+                        titletext = dpg.add_text(f"{movie['title']}", wrap=110)
                         dpg.add_spacer(width=25)
                         dpg.bind_item_font(titletext, titleMG)
 
@@ -165,7 +165,7 @@ def filter_movies():
 
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
-    display_text = f"{condition_text} movies" if conditions else "There are no movies that match your request."
+    display_text = f"Keyword: {condition_text} movies" if conditions else "There are no movies that match your request."
 
     # Cập nhật dòng text trên UI
     if dpg.does_item_exist("filter_text"):
@@ -236,7 +236,7 @@ def filter_movies():
                     with dpg.group(parent=row, horizontal=False):
                         dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
                         dpg.add_spacer(width=25)
-                        titletext = dpg.add_text(f"{movie['title']} ({movie['vote_average']})", wrap=110)
+                        titletext = dpg.add_text(f"{movie['title']} ", wrap=110)
                         dpg.add_spacer(width=25)
                         dpg.bind_item_font(titletext, titleMG)
                 except Exception as e:
@@ -315,7 +315,7 @@ def show_movie_details(sender, app_data, user_data):
 
                         dpg.add_spacer(width=10)
 
-                        rating = dpg.add_text(f"Rating: {movie_details.get('vote_average', 'N/A')}", color=(255, 255, 255), indent=30)
+                        rating = dpg.add_text(f"Vote: {movie_details.get('vote_average', 'N/A')}", color=(255, 255, 255), indent=30)
                         dpg.bind_item_font(rating, detailText)
 
                         headerCast = dpg.add_text("Cast:", color=(255, 255, 255), indent=30)
@@ -357,7 +357,6 @@ def reset_search_ui():
     
     # Reset giá trị của search input
     dpg.set_value("SearchInput1", "")
-    current_state["keyword"] = ""
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -424,7 +423,7 @@ def search_movies(sender, app_data, user_data):
                     with dpg.group(parent=row, horizontal=False):
                         dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
                         dpg.add_spacer(width=25)
-                        titletext = dpg.add_text(f"{movie['title']} ({movie['vote_average']})", wrap=110)
+                        titletext = dpg.add_text(f"{movie['title']}", wrap=110)
                         dpg.add_spacer(width=25)
                         dpg.bind_item_font(titletext, titleMG)
                 except Exception as e:
@@ -515,7 +514,7 @@ def search_movies1(sender, app_data, user_data):
                     with dpg.group(parent=row, horizontal=False):
                         dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
                         dpg.add_spacer(width=25)
-                        titletext = dpg.add_text(f"{movie['title']} ({movie['vote_average']})", wrap=110)
+                        titletext = dpg.add_text(f"{movie['title']}", wrap=110)
                         dpg.add_spacer(width=25)
                         dpg.bind_item_font(titletext, titleMG)
                 except Exception as e:
@@ -527,7 +526,7 @@ def search_movies1(sender, app_data, user_data):
 def dropdown_callback(sender, app_data, user_data):
     if user_data == "genre":
         dpg.set_value(genre_selected, app_data)
-        display_text = f"These are {app_data} movies"
+        display_text = f"Keyword: {app_data} movies"
 
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
@@ -537,7 +536,7 @@ def dropdown_callback(sender, app_data, user_data):
     elif user_data == "country":
         dpg.set_value(country_selected, app_data)
 
-        display_text = f"These are {app_data} movies"
+        display_text = f"Keyword: {app_data} movies"
         
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
@@ -547,15 +546,15 @@ def dropdown_callback(sender, app_data, user_data):
 
     elif user_data == "country":
         dpg.set_value(release_year_selected, app_data)
-        display_text = f"These are {app_data} movies"
+        display_text = f"Keyword: {app_data} movies"
         
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
             dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
             
-    else: 
-        display_text = "There are no movies that match your request."
+    # else: 
+    #     display_text = "There are no movies that match your request."
 
     # Ensure the filter_text item exists and update its value
     if dpg.does_item_exist("filter_text"):
@@ -686,7 +685,7 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     dpg.bind_item_font(dropdown_year, buttonFont)
     dpg.bind_item_theme(dropdown_year, dropdown_theme)  
 
-    dpg.add_input_text(tag="SearchInput", hint="Input here...", pos=(450,30), width=420, height=40, multiline=True)
+    dpg.add_input_text(tag="SearchInput", hint="Input here...", pos=(450,35), width=420, height=40, multiline=False)
     dpg.bind_item_theme("SearchInput", input_theme)
     dpg.bind_item_font("SearchInput", title)
 
@@ -775,7 +774,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
 
     dpg.bind_item_theme("Movie_list", child_window_theme)
 
-    dpg.add_input_text(tag="SearchInput1", hint="Input here...", pos=(450,40), width=420, height=40, multiline=True)
+    dpg.add_input_text(tag="SearchInput1", hint="Input here...", pos=(450,45), width=420, height=40, multiline=False)
     dpg.bind_item_theme("SearchInput1", input_theme)
     dpg.bind_item_font("SearchInput1", title)
 
