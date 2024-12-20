@@ -546,7 +546,7 @@ def dropdown_callback(sender, app_data, user_data):
             dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
             
 
-    elif user_data == "country":
+    elif user_data == "year":
         dpg.set_value(release_year_selected, app_data)
         display_text = f"Keyword: {app_data} movies"
         
