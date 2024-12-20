@@ -203,7 +203,7 @@ def filter_movies():
 
     
     movies = cs.get_movies_information_from_ids(final_movie_ids)
-    # movies = cs.sort_by_popularity(movies, 40)
+    movies = cs.sort_by_popularity(movies, 40)
 
     if sort_by == "Popularity":
         movies = cs.sort_by_popularity(movies, 40)
