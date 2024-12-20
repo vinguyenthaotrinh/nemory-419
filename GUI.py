@@ -166,16 +166,13 @@ def filter_movies():
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
     display_text = f"{condition_text} movies" if conditions else "There are no movies that match your request."
-    center_text_in_window(1000, "filter_text", display_text, font_size=40)
 
     # Cập nhật dòng text trên UI
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
-        center_text_in_window(1000, "filter_text", display_text, font_size=40)
 
     else:
-        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
-        center_text_in_window(1000, "filter_text", display_text, font_size=40)
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
 
 
     #ghép back filter vào movies = filter (genre, country, year)
@@ -436,13 +433,12 @@ def search_movies(sender, app_data, user_data):
                 print(f"No poster path found for movie ID {movie['id']}.")
 
     display_text = f"Keyword: {user_query}"
-    center_text_in_window(1000, "filter_text", display_text, font_size=20)
 
 
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
     else:
-        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
 
     switch_ui("Primary Window", "Search UI")
 
@@ -476,7 +472,7 @@ def search_movies1(sender, app_data, user_data):
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
     else:
-        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
 
     # Gọi hàm search và nhận kết quả
  #   top_movies = search.search(user_query)
@@ -536,7 +532,7 @@ def dropdown_callback(sender, app_data, user_data):
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
+            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
             
     elif user_data == "country":
         dpg.set_value(country_selected, app_data)
@@ -546,7 +542,7 @@ def dropdown_callback(sender, app_data, user_data):
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
+            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
             
 
     elif user_data == "country":
@@ -556,7 +552,7 @@ def dropdown_callback(sender, app_data, user_data):
         if dpg.does_item_exist("filter_text"):
             dpg.set_value("filter_text", display_text)
         else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
+            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
             
     else: 
         display_text = "There are no movies that match your request."
@@ -568,11 +564,7 @@ def dropdown_callback(sender, app_data, user_data):
         if not dpg.does_item_exist("Search UI"):
             print("Error: Parent 'Search UI' does not exist.")
             return
-        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
-
-    # Center the text
-    center_text_in_window(1000, "filter_text", display_text, font_size=20)
-
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255), pos=(100,110))
     # Apply movie filters
     filter_movies()
     switch_ui("Primary Window", "Search UI")
@@ -712,7 +704,7 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.add_image(texture_id)
 
-    dpg.add_text("keyword", tag="filter_text", color=(255, 255, 255), pos=(370,110))
+    dpg.add_text("keyword", tag="filter_text", color=(255, 255, 255), pos=(100,110))
     dpg.bind_item_font("filter_text", keyword)
 
     headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Search UI", "Primary Window"), pos=(130, 42))
@@ -773,7 +765,6 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.bind_item_theme(dropdown_search1, dropdown_theme)  
 
     dpg.add_button(label="Find", tag = "btn_Find", callback=filter_movies, pos=(900,170))
-    center_text_in_window(1000, "filter_text", "Keyword", font_size=20)
     dpg.bind_item_theme("btn_Find", transparent_button_theme)
     dpg.bind_item_font("btn_Find", title)
 
