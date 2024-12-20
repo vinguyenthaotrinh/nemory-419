@@ -38,7 +38,8 @@ current_state = {
     "filters": {
         "genre": None,
         "country": None,
-        "year": None
+        "year": None,
+        "sort": None,
     }
 }
 
@@ -53,12 +54,24 @@ with dpg.value_registry():
     
 
 def switch_ui(hide_ui, show_ui):
-    dpg.hide_item(hide_ui)  
-    if show_ui == "Primary Window":
+    if dpg.does_item_exist(hide_ui):
+        dpg.configure_item(hide_ui, show=False) 
+    if hide_ui == "Search UI":      
+        if dpg.does_item_exist("filter_text"):
+            dpg.set_value("filter_text", "")  
+        current_state["keyword"] = ""
+        current_state["filters"]["genre"] = None
+        current_state["filters"]["country"] = None
+        current_state["filters"]["year"] = None        
         reset_primary_window()
     else: reset_search_ui()
+ 
+    if dpg.does_item_exist(show_ui):
+        dpg.configure_item(show_ui, show=True)
 
-    dpg.show_item(show_ui)  
+def back (hide_ui, show_ui):
+    dpg.hide_item(hide_ui)
+    dpg.show_item(show_ui)
 
 def top_movie():
     movies = cs.find_movie_ids_by_filters("", "", "")
@@ -113,11 +126,23 @@ def center_text_in_window(window_width, text_tag, text, font_size):
     # Cập nhật vị trí cho text
     dpg.configure_item(text_tag, pos=(x_pos, y_pos))
 
+def Pre_filter_movie():
+    current_state["filters"]["genre"] = None
+    current_state["filters"]["country"] = None
+    current_state["filters"]["year"] = None
+
 def filter_movies():
+    global genre_selected, country_selected, release_year_selected, sort_selected
+
     genre = dpg.get_value(genre_selected)
     country = dpg.get_value(country_selected)
     year = dpg.get_value(release_year_selected)
     sort_by = dpg.get_value(sort_selected)
+
+    dpg.set_value(genre_selected, "Select Genre")
+    dpg.set_value(country_selected, "Select Country")
+    dpg.set_value(release_year_selected, "Select Year")
+    dpg.set_value(sort_selected, "Sort by")
 
     current_state["filters"]["genre"] = genre if genre != "Select Genre" else None
     current_state["filters"]["country"] = country if country != "Select Country" else None
@@ -135,6 +160,7 @@ def filter_movies():
         conditions.append(f"country {country}")
     if year != "Select Year":
         conditions.append(f"year {year}")
+
     print(conditions)
 
     # Ghép các điều kiện thành chuỗi
@@ -223,13 +249,21 @@ def filter_movies():
 
 
 
-def on_select(sender, app_data):
-    if app_data.startswith("Select"):
-        selected_value = None
-    else:
-        selected_value = app_data
-    dpg.set_value(sender, app_data)
+def on_select(sender, app_data, user_data):
+    if user_data == "genre":
+        dpg.set_value(genre_selected, app_data)
 
+    elif user_data == "country":
+        dpg.set_value(country_selected, app_data)
+
+    
+    elif user_data == "year":
+        dpg.set_value(release_year_selected, app_data)
+
+
+    elif user_data == "other":
+        dpg.set_value(sort_selected, app_data)
+   
 # Hàm hiển thị giao diện chi tiết phim
 def show_movie_details(sender, app_data, user_data):
     global current_ui
@@ -307,7 +341,7 @@ def show_movie_details(sender, app_data, user_data):
         # Switch UI after successfully updating details
     except Exception as e:
         print(f"Error creating movie details group: {e}")
-    switch_ui(current_ui, "DetailUI")
+    back(current_ui, "DetailUI")
 
 def reset_primary_window():
     # Reset các dropdown về giá trị mặc định
@@ -326,6 +360,7 @@ def reset_search_ui():
     
     # Reset giá trị của search input
     dpg.set_value("SearchInput1", "")
+    current_state["keyword"] = ""
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -492,12 +527,11 @@ def search_movies1(sender, app_data, user_data):
                     print(f"Could not load image {poster_path}: {e}")
             else:
                 print(f"No poster path found for movie ID {movie['id']}.")
+    Pre_filter_movie()
 
 def dropdown_callback(sender, app_data, user_data):
-    # Cập nhật giá trị dropdown đã chọn
     if user_data == "genre":
         dpg.set_value(genre_selected, app_data)
-
         display_text = f"These are {app_data} movies"
 
         if dpg.does_item_exist("filter_text"):
@@ -518,7 +552,6 @@ def dropdown_callback(sender, app_data, user_data):
 
     elif user_data == "country":
         dpg.set_value(release_year_selected, app_data)
-
         display_text = f"These are {app_data} movies"
         
         if dpg.does_item_exist("filter_text"):
@@ -528,13 +561,23 @@ def dropdown_callback(sender, app_data, user_data):
             
     else: 
         display_text = "There are no movies that match your request."
-        if dpg.does_item_exist("filter_text"):
-            dpg.set_value("filter_text", display_text)
-        else:
-            dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
-            
+
+    # Ensure the filter_text item exists and update its value
+    if dpg.does_item_exist("filter_text"):
+        dpg.set_value("filter_text", display_text)
+    else:
+        if not dpg.does_item_exist("Search UI"):
+            print("Error: Parent 'Search UI' does not exist.")
+            return
+        dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
+
+    # Center the text
+    center_text_in_window(1000, "filter_text", display_text, font_size=20)
+
+    # Apply movie filters
     filter_movies()
     switch_ui("Primary Window", "Search UI")
+
 
 with dpg.theme() as result_background_theme:
     with dpg.theme_component(dpg.mvAll):
@@ -545,6 +588,11 @@ with dpg.theme() as child_window_theme:
         dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (100,102,155,200))  
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (100, 100, 150, 255))  
         dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, (150, 150, 200, 255))  
+
+with dpg.theme() as theme_button_back:
+    with dpg.theme_component(dpg.mvAll):
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0))       
+        dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0)            
 
 with dpg.theme() as child_window_searchbar_theme:
     with dpg.theme_component(dpg.mvChildWindow):
@@ -588,6 +636,8 @@ with dpg.texture_registry():
     texture_id = dpg.add_static_texture(width, height, data)
     width1, height1, channels1, data1 = dpg.load_image("asset/bgExtra.png")
     bgExtra = dpg.add_static_texture(width1, height1, data1)
+    width2, height2, channels2, data2 = dpg.load_image("asset/backicon.png")
+    back_icon = dpg.add_static_texture(width2, height2, data2)
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
         dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0), category=dpg.mvThemeCat_Core)  # Nền bình thường (trong suốt)
@@ -662,6 +712,7 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 
 with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.add_image(texture_id)
+
     dpg.add_text("keyword", tag="filter_text", color=(255, 255, 255), pos=(370,110))
     dpg.bind_item_font("filter_text", keyword)
 
@@ -672,7 +723,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     with dpg.group(pos=(100, 170), width = 150, height = 100):
         dropdown_genre2 = dpg.add_combo(
             items=genres, 
-            source=genre_selected,
+            source=current_state["filters"]["genre"],
             callback=on_select,
             user_data= "genre",
             default_value="Select Genre" 
@@ -683,7 +734,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     with dpg.group(pos=(300, 170), width = 150, height = 100):
         dropdown_country2 = dpg.add_combo(
             items=countries, 
-            source=country_selected,
+            source=current_state["filters"]["country"],
             callback=on_select,
             user_data= "country",
             default_value="Select Country" 
@@ -694,7 +745,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     with dpg.group(pos=(500, 170), width = 150, height = 100):
         dropdown_year2 = dpg.add_combo(
             items=year, 
-            source=release_year_selected,
+            source=current_state["filters"]["year"],
             callback=on_select,
             user_data= "year",
             default_value="Select Year" 
@@ -706,7 +757,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
         dropdown_sortby = dpg.add_combo(
             items= ["Popularity", "Rating", "Latest Movie"], 
             default_value="Sort by",
-            source=sort_selected,
+            source=current_state["filters"]["sort"],
             callback=on_select,
             user_data= "other"
         )
@@ -744,7 +795,13 @@ with dpg.window(label="Search", tag="Search UI", show=False):
 
 with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     dpg.add_image(bgExtra)
-    headerDetail = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("DetailUI", "Primary Window"), pos=(50, 60))        
+    headerDetail = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("DetailUI", "Primary Window"), pos=(80, 50))      
+    back_button = dpg.add_image_button(texture_tag=back_icon, pos=(40, 50), width=30, height=30, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: back("DetailUI", "Primary Window"))
+    dpg.bind_item_theme(back_button, theme_button_back) 
+      
     dpg.bind_item_font(headerDetail, header)
     dpg.bind_item_theme(headerDetail, transparent_button_theme)
 
