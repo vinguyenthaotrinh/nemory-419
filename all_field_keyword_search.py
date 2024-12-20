@@ -79,8 +79,8 @@ def keyword_search(user_query):
     # Filter and sort results
     filtered_results = merged_df[merged_df['similarity'] > 0].sort_values('similarity', ascending=False)
 
-    # Display top 10 results
-    top_movies = filtered_results.head(10)
+    # # Display top 10 results
+    top_movies = filtered_results.head(40)
     
 
     if not top_movies.empty:
