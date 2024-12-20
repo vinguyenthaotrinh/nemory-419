@@ -153,7 +153,7 @@ def filter_movies():
     # Tạo chuỗi điều kiện hiển thị
     conditions = []
     if keyword != "":
-        conditions.append(f"keyword: {keyword}")
+        conditions.append(f"{keyword}")
     if genre != "Select Genre":
         conditions.append(f"{genre.lower()}")
     if country != "Select Country":
@@ -713,7 +713,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     with dpg.group(pos=(100, 170), width = 150, height = 100):
         dropdown_genre2 = dpg.add_combo(
             items=genres, 
-            source=current_state["filters"]["genre"],
+            source=genre_selected,
             callback=on_select,
             user_data= "genre",
             default_value="Select Genre" 
@@ -724,7 +724,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     with dpg.group(pos=(300, 170), width = 150, height = 100):
         dropdown_country2 = dpg.add_combo(
             items=countries, 
-            source=current_state["filters"]["country"],
+            source=country_selected,
             callback=on_select,
             user_data= "country",
             default_value="Select Country" 
@@ -735,7 +735,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     with dpg.group(pos=(500, 170), width = 150, height = 100):
         dropdown_year2 = dpg.add_combo(
             items=year, 
-            source=current_state["filters"]["year"],
+            source=release_year_selected,
             callback=on_select,
             user_data= "year",
             default_value="Select Year" 
@@ -747,7 +747,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
         dropdown_sortby = dpg.add_combo(
             items= ["Popularity", "Rating", "Latest Movie"], 
             default_value="Sort by",
-            source=current_state["filters"]["sort"],
+            source=sort_selected,
             callback=on_select,
             user_data= "other"
         )
