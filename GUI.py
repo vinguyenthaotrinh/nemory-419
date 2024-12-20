@@ -127,6 +127,8 @@ def filter_movies():
 
     # Tạo chuỗi điều kiện hiển thị
     conditions = []
+    if keyword != "":
+        conditions.append(f"keyword: {keyword}")
     if genre != "Select Genre":
         conditions.append(f"{genre.lower()}")
     if country != "Select Country":
@@ -137,7 +139,7 @@ def filter_movies():
 
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
-    display_text = f"These are {condition_text} movies" if conditions else "There are no movies that match your request."
+    display_text = f"{condition_text} movies" if conditions else "There are no movies that match your request."
     
     # Cập nhật dòng text trên UI
     if dpg.does_item_exist("filter_text"):
@@ -401,7 +403,7 @@ def search_movies(sender, app_data, user_data):
 def search_movies1(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput1")
-    search_type = dpg.get_value("SearchTypeDropdown")
+    search_type = dpg.get_value("SearchTypeDropdown1")
 
     current_state["keyword"] = user_query
     current_state["search_type"] = search_type
@@ -700,6 +702,14 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.bind_item_font(dropdown_sortby, buttonFont)
     dpg.bind_item_theme(dropdown_sortby, dropdown_theme)  
     
+    with dpg.group(pos=(300, 50), width = 150, height = 100):
+        dropdown_search1 = dpg.add_combo(
+            items=["Title", "Keyword", "Semantic"], 
+            tag= "SearchTypeDropdown1", 
+            default_value="Title",
+        )
+    dpg.bind_item_font(dropdown_search1, buttonFont)
+    dpg.bind_item_theme(dropdown_search1, dropdown_theme)  
 
     dpg.add_button(label="Find", tag = "btn_Find", callback=filter_movies, pos=(900,170))
     #center_text_in_window(1000, "filter_text", "Keyword", font_size=20)
