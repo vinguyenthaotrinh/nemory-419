@@ -102,9 +102,9 @@ def top_movie():
 def center_text_in_window(window_width, text_tag, text, font_size):
     
     # Giả sử chiều cao font và chiều rộng mỗi ký tự tạm tính
-    text_width = len(text) * (font_size * 2)  # Ước lượng chiều rộng ký tự
+    text_width = len(text) * (font_size * 0.55)  # Ước lượng chiều rộng ký tự
     print(text_width)
-    text_height = font_size                     # Chiều cao của font
+    text_height = font_size                    
     
     # Tính toán vị trí chính giữa
     x_pos = (window_width - text_width) / 2
@@ -140,12 +140,17 @@ def filter_movies():
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
     display_text = f"{condition_text} movies" if conditions else "There are no movies that match your request."
-    
+    center_text_in_window(1000, "filter_text", display_text, font_size=20)
+
     # Cập nhật dòng text trên UI
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
+        center_text_in_window(1000, "filter_text", display_text, font_size=20)
+
     else:
         dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
+        center_text_in_window(1000, "filter_text", display_text, font_size=20)
+
 
     #ghép back filter vào movies = filter (genre, country, year)
     # filtered_movies = [movie for movie in movies if
@@ -155,8 +160,14 @@ def filter_movies():
 
     #Ghép back sort by Popularity, Rating, Latest Movie
     movie_ids = cs.find_movie_ids_by_filters(genre, year, country)
+
     if (keyword != ""):
-        movies = afks.keyword_search(keyword)
+        if current_state["search_type"] == "Title":
+            movies = ts.title_search(keyword)
+        elif current_state["search_type"] == "Keyword":
+            movies = afks.keyword_search(keyword)
+        elif current_state["search_type"] == "Semantic":
+            movies = so.search(keyword)
         movie_ids = (
             [str(movie['id']) for movie in movies] if isinstance(movies, list) 
             else list(map(str, movies['id'].tolist()))
@@ -258,23 +269,27 @@ def show_movie_details(sender, app_data, user_data):
                         dpg.bind_item_font(overView, detailText)
                         dpg.add_spacer(width=10)
 
-                        dpg.add_text("Production Companies:", color=(255, 255, 255), indent=30)
+                        headerCompany = dpg.add_text("Production Companies:", color=(255, 255, 255), indent=30)
+                        dpg.bind_item_font(headerCompany, detailText)
+
                         companies_data = movie_details.get('production_companies', '[]')
                         try:
                             companies_list = json.loads(companies_data)  
                             for company in companies_list:
                                 company_name = company.get('name', 'Unknown Company')
-                                company_item = dpg.add_text(f"- {company_name}", color=(200, 200, 200), indent=50)
+                                company_item = dpg.add_text(f"- {company_name}", color=(255, 255, 255), indent=50)
                                 dpg.bind_item_font(company_item, detailText)
                         except json.JSONDecodeError:
-                            dpg.add_text("Company information is not available.", color=(200, 200, 200), indent=50)
+                            dpg.add_text("Company information is not available.", color=(255, 255, 255), indent=50)
 
                         dpg.add_spacer(width=10)
 
                         rating = dpg.add_text(f"Rating: {movie_details.get('vote_average', 'N/A')}", color=(255, 255, 255), indent=30)
                         dpg.bind_item_font(rating, detailText)
 
-                        dpg.add_text("Cast:", color=(255, 255, 255), indent=30)
+                        headerCast = dpg.add_text("Cast:", color=(255, 255, 255), indent=30)
+                        dpg.bind_item_font(headerCast, detailText)
+
                         cast_data = movie_details.get('cast', '[]')
                         try:
                             cast_list = json.loads(cast_data)  
@@ -282,15 +297,10 @@ def show_movie_details(sender, app_data, user_data):
                                 actor_name = cast_member.get('name', 'Unknown Actor')
                                 character_name = cast_member.get('character', 'Unknown Character')
                                 cast_text = f"- {actor_name} as {character_name}"
-                                cast_item = dpg.add_text(cast_text, color=(200, 200, 200), indent=50)
+                                cast_item = dpg.add_text(cast_text, color=(255, 255, 255), indent=50)
                                 dpg.bind_item_font(cast_item, detailText)
                         except json.JSONDecodeError:
-                            dpg.add_text("Cast information is not available.", color=(200, 200, 200), indent=50)
-
-                        
-            
-
-
+                            dpg.add_text("Cast information is not available.", color=(255, 255, 255), indent=50)
             except Exception as e:
                 dpg.add_text(f"Poster not available: {e}")
         
@@ -323,9 +333,8 @@ def search_movies(sender, app_data, user_data):
     search_type = dpg.get_value("SearchTypeDropdown")
 
     current_state["keyword"] = user_query
-    current_state["search_type"] = search_type
-
     current_state["filters"] = {"genre": None, "country": None, "year": None}
+    current_state["search_type"] = search_type
 
     # Gọi hàm search và nhận kết quả
     if search_type == "Title":
@@ -392,6 +401,8 @@ def search_movies(sender, app_data, user_data):
                 print(f"No poster path found for movie ID {movie['id']}.")
 
     display_text = f"Keyword: {user_query}"
+    center_text_in_window(1000, "filter_text", display_text, font_size=20)
+
 
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
@@ -546,7 +557,7 @@ with dpg.theme() as dropdown_theme:
         dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (0, 0, 0, 0))  
         dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (21, 76, 121, 50)) 
         dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (21, 76, 121, 200)) 
-        dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (0, 0, 0, 100))   
+        dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (0, 0, 0, 230))   
         dpg.add_theme_color(dpg.mvStyleVar_WindowPadding, 5)
         dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 5) 
         dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 5)  
@@ -587,20 +598,20 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     current_ui = "Primary Window"
     dpg.add_image(texture_id)
     
-    dpg.draw_text((220, 25), "NEMORY", color=(255, 255, 255, 255), size=40, tag="custom_text")
+    dpg.draw_text((130, 25), "NEMORY", color=(255, 255, 255, 255), size=40, tag="custom_text")
     dpg.bind_item_font("custom_text", header)
 
     dpg.draw_text((380, 140), "THE BEST MOVIES OF ALL TIME", color=(255, 255, 255, 255), size=20, tag="top_text")
     dpg.bind_item_font("top_text", title)
 
-    with dpg.group(pos=(300, 50), width = 150, height = 100):
+    with dpg.group(pos=(335, 35), width = 110, height = 100):
         dropdown_search = dpg.add_combo(
             items=["Title", "Keyword", "Semantic"], 
             tag= "SearchTypeDropdown", 
             default_value="Title",
 
         )
-    dpg.bind_item_font(dropdown_search, buttonFont)
+    dpg.bind_item_font(dropdown_search, title)
     dpg.bind_item_theme(dropdown_search, dropdown_theme)  
 
     with dpg.group(pos=(300, 90), width = 150, height = 100):
@@ -651,10 +662,10 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 
 with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.add_image(texture_id)
-    dpg.add_text("Keyword", tag="filter_text", color=(255, 255, 255), pos=(370,110))
+    dpg.add_text("keyword", tag="filter_text", color=(255, 255, 255), pos=(370,110))
     dpg.bind_item_font("filter_text", keyword)
 
-    headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Search UI", "Primary Window"), pos=(220, 45))
+    headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Search UI", "Primary Window"), pos=(130, 42))
     dpg.bind_item_font(headerGen, header)
     dpg.bind_item_theme(headerGen, transparent_button_theme)
 
@@ -691,7 +702,7 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.bind_item_font(dropdown_year2, buttonFont)
     dpg.bind_item_theme(dropdown_year2, dropdown_theme)  
 
-    with dpg.group(pos=(700, 170), width = 150, height = 100):
+    with dpg.group(pos=(700, 170), width = 110, height = 100):
         dropdown_sortby = dpg.add_combo(
             items= ["Popularity", "Rating", "Latest Movie"], 
             default_value="Sort by",
@@ -702,17 +713,17 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.bind_item_font(dropdown_sortby, buttonFont)
     dpg.bind_item_theme(dropdown_sortby, dropdown_theme)  
     
-    with dpg.group(pos=(300, 50), width = 150, height = 100):
+    with dpg.group(pos=(335, 45), width = 110, height = 100):
         dropdown_search1 = dpg.add_combo(
             items=["Title", "Keyword", "Semantic"], 
             tag= "SearchTypeDropdown1", 
             default_value="Title",
         )
-    dpg.bind_item_font(dropdown_search1, buttonFont)
+    dpg.bind_item_font(dropdown_search1, title)
     dpg.bind_item_theme(dropdown_search1, dropdown_theme)  
 
     dpg.add_button(label="Find", tag = "btn_Find", callback=filter_movies, pos=(900,170))
-    #center_text_in_window(1000, "filter_text", "Keyword", font_size=20)
+    center_text_in_window(1000, "filter_text", "Keyword", font_size=20)
     dpg.bind_item_theme("btn_Find", transparent_button_theme)
     dpg.bind_item_font("btn_Find", title)
 
