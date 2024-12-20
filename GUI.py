@@ -65,7 +65,9 @@ def switch_ui(hide_ui, show_ui):
         current_state["filters"]["year"] = None        
         reset_primary_window()
     else: reset_search_ui()
- 
+    if hide_ui == "DetailUI" and show_ui == "Primary Window":
+        dpg.configure_item("Search UI", show=False) 
+
     if dpg.does_item_exist(show_ui):
         dpg.configure_item(show_ui, show=True)
 
