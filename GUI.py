@@ -63,7 +63,7 @@ def switch_ui(hide_ui, show_ui):
 def top_movie():
     movies = cs.find_movie_ids_by_filters("", "", "")
     movies = cs.get_movies_information_from_ids(movies)
-    movies = cs.sort_by_popularity(movies, 10)
+    movies = cs.sort_by_popularity(movies, 40)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("TopMovie_list"):
@@ -140,16 +140,16 @@ def filter_movies():
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
     display_text = f"{condition_text} movies" if conditions else "There are no movies that match your request."
-    center_text_in_window(1000, "filter_text", display_text, font_size=20)
+    center_text_in_window(1000, "filter_text", display_text, font_size=40)
 
     # Cập nhật dòng text trên UI
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
-        center_text_in_window(1000, "filter_text", display_text, font_size=20)
+        center_text_in_window(1000, "filter_text", display_text, font_size=40)
 
     else:
         dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255))
-        center_text_in_window(1000, "filter_text", display_text, font_size=20)
+        center_text_in_window(1000, "filter_text", display_text, font_size=40)
 
 
     #ghép back filter vào movies = filter (genre, country, year)
@@ -178,14 +178,14 @@ def filter_movies():
 
     
     movies = cs.get_movies_information_from_ids(final_movie_ids)
-    movies = cs.sort_by_popularity(movies, 10)
+    movies = cs.sort_by_popularity(movies, 40)
 
     if sort_by == "Popularity":
-        movies = cs.sort_by_popularity(movies, 10)
+        movies = cs.sort_by_popularity(movies, 40)
     elif sort_by == "Rating":
-        movies = cs.sort_movies_by_score(movies, 10)
+        movies = cs.sort_movies_by_score(movies, 40)
     elif sort_by == "Latest Movie":
-        movies = cs.sort_by_release_date(movies, 10)
+        movies = cs.sort_by_release_date(movies, 40)
     
 
     # Cập nhật danh sách phim hiển thị
@@ -418,7 +418,6 @@ def search_movies1(sender, app_data, user_data):
 
     current_state["keyword"] = user_query
     current_state["search_type"] = search_type
-
     
     if search_type == "Title":
         print ("title search")
