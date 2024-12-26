@@ -15,6 +15,9 @@ cs.load_data("dataset/genres_inverted.json", "dataset/movies.json", "dataset/pro
 global is_liked
 is_liked = True 
 global idDetailMovies
+idDetailMovies = ""
+global likeMovies
+likeMovies = cs.read_lines_from_file("dataset/likes.txt")
 
 genres = [
     "Select Genre",
@@ -55,7 +58,6 @@ with dpg.value_registry():
     sort_selected = dpg.add_string_value(default_value="Sort by")
 
     
-
 def switch_ui(hide_ui, show_ui):
     if dpg.does_item_exist(hide_ui):
         dpg.configure_item(hide_ui, show=False) 
@@ -73,12 +75,16 @@ def switch_ui(hide_ui, show_ui):
 
     if dpg.does_item_exist(show_ui):
         dpg.configure_item(show_ui, show=True)
+    
+    if show_ui == "Like Window" or hide_ui == "Like Window" or show_ui == "Primary Window":
+        like_movie()
 
 def back (hide_ui, show_ui):
     dpg.hide_item(hide_ui)
     dpg.show_item(show_ui)
 
 def top_movie():
+    print("Top movie")
     movies = cs.find_movie_ids_by_filters("", "", "")
     movies = cs.get_movies_information_from_ids(movies)
     movies = cs.sort_by_popularity(movies, 40)
@@ -116,6 +122,47 @@ def top_movie():
                     print(f"Could not load image {poster_path}: {e}")
     else:
         dpg.add_text(f"No top movies found", parent="TopMovie_list")
+        
+def like_movie():
+    global likeMovies
+    print(likeMovies)
+    movies = likeMovies
+    movies = cs.get_movies_information_from_ids(movies)
+    movies = cs.sort_by_popularity(movies, 100)
+
+    # Cập nhật danh sách phim hiển thị
+    if not dpg.does_item_exist("LikeMovie_list"):
+        print("Error: 'LikeMovie_list' does not exist!")
+        return
+
+    dpg.delete_item("LikeMovie_list", children_only=True)  # Xóa kết quả cũ
+
+    if dpg.does_item_exist("LikeMovieTextureRegistry"):
+        dpg.delete_item("LikeMovieTextureRegistry")
+
+    if movies:
+        with dpg.texture_registry(tag="LikeMovieTextureRegistry") as reg_id:
+            row = None  # Dùng để tạo một hàng mới
+            for idx, movie in enumerate(movies):
+                if idx % 5 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
+                    row = dpg.add_group(parent="LikeMovie_list", horizontal=True, horizontal_spacing=60)
+
+                poster_path = gp.get_poster_image(movie['id'])
+                try:
+                    width, height, channels, data = dpg.load_image(poster_path)
+                    texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+
+                    with dpg.group(parent=row, horizontal=False):
+                        dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
+                        dpg.add_spacer(width=25)
+                        titletext = dpg.add_text(f"{movie['title']}", wrap=110)
+                        dpg.add_spacer(width=25)
+                        dpg.bind_item_font(titletext, titleMG)
+
+                except Exception as e:
+                    print(f"Could not load image {poster_path}: {e}")
+    else:
+        dpg.add_text(f"No like movies found", parent="LikeMovie_list")
 
 def center_text_in_window(window_width, text_tag, text, font_size):
     
@@ -284,18 +331,41 @@ def show_movie_details(sender, app_data, user_data):
             gp.get_poster_image(movie['id'])
             global idDetailMovies
             idDetailMovies = movie['id']
+            print(idDetailMovies)
             poster_path = f"poster/{movie['id']}.jpg"
             movie_details = movies_data.get(str(movie['id']))
+            if idDetailMovies in likeMovies:
+                tmp = like_icon
+            else:
+                tmp = unlike_icon
+            print("des")
+            print(idDetailMovies)
+
             print("hacHACB")
             try:
                 width, height, channels, data = dpg.load_image(poster_path)
                 texture_id = dpg.add_static_texture(width, height, data)
+
                 with dpg.group(parent="DetailContent", horizontal=True):
                     dpg.add_image(texture_id, width=200, height=300, pos= (20,20))
+
                     with dpg.group(horizontal=False):
+                        
                         dpg.add_spacer(width=30)
-                        titleM = dpg.add_text(f"{movie['title']}", color=(255, 255, 255), indent=30, wrap = 500)
-                        dpg.bind_item_font(titleM, titlemovieText)
+                        with dpg.group(horizontal=True):
+                            titleM = dpg.add_text(f"{movie['title']}", color=(255, 255, 255), indent=30, wrap = 500)
+                            dpg.bind_item_font(titleM, titlemovieText)
+                            star_button = dpg.add_image_button(
+                                texture_tag=tmp,  # Assuming tmp is a valid texture tag
+                                width=50,
+                                height=50,
+                                pos=(700, 30),
+                                background_color=(0, 0, 0, 0),
+                                callback=toggle_star,
+                                user_data="star_button"
+                            )
+                            dpg.bind_item_theme(star_button, theme_button_back)
+                            
                         dpg.add_spacer(width=10)
 
                         release = dpg.add_text(f"Release Date: {movie_details.get('release_date', 'Unknown')}", color=(255, 255, 255), indent=30)
@@ -366,10 +436,20 @@ def reset_search_ui():
     dpg.set_value("SearchInput1", "")
     
 def toggle_star(user_data):
-    global is_liked  # Explicitly declare is_liked as global
+    global idDetailMovies
+    global likeMovies  # Explicitly declare is_liked as global
+    if idDetailMovies in likeMovies:
+        new_image = unlike_icon
+        likeMovies.remove(idDetailMovies)
+        print(idDetailMovies)
+        print(likeMovies)
+    else:
+        new_image = like_icon
+        likeMovies.append(idDetailMovies)
+        print(idDetailMovies)
+        print(likeMovies)
+    cs.save_list_to_file(likeMovies, "dataset/likes.txt")
     button_tag = user_data
-    is_liked = not is_liked
-    new_image = like_icon if is_liked else unlike_icon
     dpg.configure_item(button_tag, texture_tag=new_image)
 
 def search_movies(sender, app_data, user_data):
@@ -717,6 +797,16 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
         top_movie()
 
     dpg.bind_item_theme("TopMovie_list", child_window_theme)
+    star_button = dpg.add_image_button(
+        texture_tag=like_icon,  # Initial image
+        width=50, 
+        height=50, 
+        pos=(50, 30),
+        frame_padding=0,
+        background_color=(0, 0, 0, 0),
+        callback=lambda: switch_ui("Primary Window", "Like Window")
+    )
+    dpg.bind_item_theme(star_button, theme_button_back)
 
 with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.add_image(texture_id)
@@ -799,6 +889,24 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     button_search1 = dpg.add_button(label="Search!", pos=(890, 45), callback=search_movies1)
     dpg.bind_item_theme(button_search1, transparent_button_theme)
     dpg.bind_item_font(button_search1, title)
+    
+with dpg.window(label="Like", tag="Like Window", show=False):
+    show_ui = "Like Window"
+    dpg.add_image(texture_id)
+    
+    dpg.add_text("SOME OF YOUR FAVORITE MOVIES", tag="like_text", color=(255, 255, 255), pos=(300,110))
+    dpg.bind_item_font("like_text", title)
+
+    headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Like Window", "Primary Window"), pos=(130, 42))
+    dpg.bind_item_font(headerGen, header)
+    dpg.bind_item_theme(headerGen, transparent_button_theme)
+
+    with dpg.child_window(tag="LikeMovie_list", width=800, height=480, pos=(100, 180)):
+        dpg.add_text("Results will appear here.") 
+        like_movie()
+
+    dpg.bind_item_theme("LikeMovie_list", child_window_theme)
+
 
 with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     dpg.add_image(bgExtra)
@@ -813,17 +921,7 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     with dpg.child_window(tag="DetailContent", width=800, height=480, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("DetailContent", child_window_theme)
-    star_button = dpg.add_image_button(
-        texture_tag=like_icon,  # Initial image
-        width=50, 
-        height=50, 
-        pos=(800, 70),
-        frame_padding=0,
-        background_color=(0, 0, 0, 0),
-        callback=toggle_star,
-        user_data="star_button"
-    )
-    dpg.bind_item_theme(star_button, theme_button_back)
+    
         
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)

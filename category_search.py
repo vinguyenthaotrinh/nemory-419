@@ -8,6 +8,19 @@ country_data = None
 releases_data = None
 m, C = None, None
 
+def read_lines_from_file(filename):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+
+    # Remove newline characters from the end of each line
+    lines = [str(line.strip()) for line in lines] 
+    return lines
+
+def save_list_to_file(list, filename):
+    with open(filename, 'w') as file:
+        for item in list:
+            file.write(str(item) + '\n')
+
 def load_data(genres_file, movies_file, country_file, releases_file):
     """
     Load JSON data into global variables.
