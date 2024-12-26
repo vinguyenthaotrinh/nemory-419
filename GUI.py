@@ -12,6 +12,9 @@ movies_file = "dataset/movies.json"
 movies_data = fbg.load_json(movies_file)
 current_ui = "Primary Window"
 cs.load_data("dataset/genres_inverted.json", "dataset/movies.json", "dataset/production_countries_inverted.json", "dataset/release_year_inverted.json")
+global is_liked
+is_liked = True 
+global idDetailMovies
 
 genres = [
     "Select Genre",
@@ -279,6 +282,8 @@ def show_movie_details(sender, app_data, user_data):
     try:    
         with dpg.texture_registry(tag="DetailTextureRegistry") as reg_id:
             gp.get_poster_image(movie['id'])
+            global idDetailMovies
+            idDetailMovies = movie['id']
             poster_path = f"poster/{movie['id']}.jpg"
             movie_details = movies_data.get(str(movie['id']))
             print("hacHACB")
@@ -359,6 +364,13 @@ def reset_search_ui():
     
     # Reset giá trị của search input
     dpg.set_value("SearchInput1", "")
+    
+def toggle_star(user_data):
+    global is_liked  # Explicitly declare is_liked as global
+    button_tag = user_data
+    is_liked = not is_liked
+    new_image = like_icon if is_liked else unlike_icon
+    dpg.configure_item(button_tag, texture_tag=new_image)
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -630,6 +642,10 @@ with dpg.texture_registry():
     bgExtra = dpg.add_static_texture(width1, height1, data1)
     width2, height2, channels2, data2 = dpg.load_image("asset/backicon.png")
     back_icon = dpg.add_static_texture(width2, height2, data2)
+    width2, height2, channels2, data2 = dpg.load_image("asset/start_like.png")
+    like_icon = dpg.add_static_texture(width2, height2, data2)
+    width2, height2, channels2, data2 = dpg.load_image("asset/start_nolike.png")
+    unlike_icon = dpg.add_static_texture(width2, height2, data2)
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
         dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0), category=dpg.mvThemeCat_Core)  # Nền bình thường (trong suốt)
@@ -792,13 +808,22 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
                         background_color=(0, 0, 0, 0),
                         callback=lambda: back("DetailUI", "Primary Window"))
     dpg.bind_item_theme(back_button, theme_button_back) 
-      
     dpg.bind_item_font(headerDetail, header)
     dpg.bind_item_theme(headerDetail, transparent_button_theme)
-
     with dpg.child_window(tag="DetailContent", width=800, height=480, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("DetailContent", child_window_theme)
+    star_button = dpg.add_image_button(
+        texture_tag=like_icon,  # Initial image
+        width=50, 
+        height=50, 
+        pos=(800, 70),
+        frame_padding=0,
+        background_color=(0, 0, 0, 0),
+        callback=toggle_star,
+        user_data="star_button"
+    )
+    dpg.bind_item_theme(star_button, theme_button_back)
         
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)
