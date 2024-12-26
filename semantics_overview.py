@@ -49,7 +49,6 @@ try:
 except FileNotFoundError:
     save_embeddings()
 
-print(merged_df)
 # Search function using Sentence Transformers
 def search(user_query):
     query_embedding = model.encode(user_query)
@@ -102,6 +101,8 @@ def search(user_query):
         
     return top_movies
 
+def get_merged_df():
+    return merged_df
     
 # Run the search function
 if __name__ == '__main__':
