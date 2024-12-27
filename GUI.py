@@ -449,6 +449,7 @@ def toggle_star(user_data):
         print(idDetailMovies)
         print(likeMovies)
     cs.save_list_to_file(likeMovies, "dataset/likes.txt")
+    like_movie()
     button_tag = user_data
     dpg.configure_item(button_tag, texture_tag=new_image)
 
@@ -903,7 +904,6 @@ with dpg.window(label="Like", tag="Like Window", show=False):
 
     with dpg.child_window(tag="LikeMovie_list", width=800, height=480, pos=(100, 180)):
         dpg.add_text("Results will appear here.") 
-        like_movie()
 
     dpg.bind_item_theme("LikeMovie_list", child_window_theme)
 
