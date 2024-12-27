@@ -7,7 +7,10 @@ import semantics_overview as so
 import title_search as ts
 import json
 import category_search as cs
+import recommend as rc
 
+global recommender
+recommender = rc.MovieRecommender()
 movies_file = "dataset/movies.json"
 movies_data = fbg.load_json(movies_file)
 current_ui = "Primary Window"
@@ -160,6 +163,47 @@ def like_movie():
                     print(f"Could not load image {poster_path}: {e}")
     else:
         dpg.add_text(f"No like movies found", parent="LikeMovie_list")
+        
+def recommend_movie():
+    global recommender, likeMovies
+    print("CHECK")
+    print(likeMovies)
+    movies = recommender.find_similar_movies(likeMovies, 40)
+    print(movies)
+
+    # Cập nhật danh sách phim hiển thị
+    if not dpg.does_item_exist("Recommd_list"):
+        print("Error: 'Recommd_list' does not exist!")
+        return
+
+    dpg.delete_item("Recommd_list", children_only=True)  # Xóa kết quả cũ
+
+    if dpg.does_item_exist("RecommdMovieTextureRegistry"):
+        dpg.delete_item("RecommdMovieTextureRegistry")
+
+    if movies:
+        with dpg.texture_registry(tag="RecommdMovieTextureRegistry") as reg_id:
+            row = None  # Dùng để tạo một hàng mới
+            for idx, movie in enumerate(movies):
+                if idx % 5 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
+                    row = dpg.add_group(parent="Recommd_list", horizontal=True, horizontal_spacing=60)
+
+                poster_path = gp.get_poster_image(movie['id'])
+                try:
+                    width, height, channels, data = dpg.load_image(poster_path)
+                    texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+
+                    with dpg.group(parent=row, horizontal=False):
+                        dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
+                        dpg.add_spacer(width=25)
+                        titletext = dpg.add_text(f"{movie['title']}", wrap=110)
+                        dpg.add_spacer(width=25)
+                        dpg.bind_item_font(titletext, titleMG)
+
+                except Exception as e:
+                    print(f"Could not load image {poster_path}: {e}")
+    else:
+        dpg.add_text(f"No like movies found", parent="Recommd_list")
 
 def center_text_in_window(window_width, text_tag, text, font_size):
     
@@ -447,6 +491,7 @@ def toggle_star(user_data):
         print(likeMovies)
     cs.save_list_to_file(likeMovies, "dataset/likes.txt")
     like_movie()
+    # recommend_movie()
     button_tag = user_data
     dpg.configure_item(button_tag, texture_tag=new_image)
 
@@ -909,7 +954,7 @@ with dpg.window(label="Like", tag="Like Window", show=False):
     dpg.bind_item_font("recom_text", title)
     
     with dpg.child_window(tag="Recommd_list", width=800, height=240, pos=(100, 440)):
-        like_movie()
+        recommend_movie()
 
     dpg.bind_item_theme("Recommd_list", child_window_theme)
 

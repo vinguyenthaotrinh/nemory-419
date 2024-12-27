@@ -15,6 +15,7 @@ class MovieRecommender:
         if self.movies_df is None:
             raise ValueError("Please load embeddings first using load_embeddings()")
             
+        movie_ids = [int(ids) for ids in movie_ids]
         # Find the movies in our dataset
         input_movies = self.movies_df[self.movies_df['id'].isin(movie_ids)]
         if input_movies.empty:
