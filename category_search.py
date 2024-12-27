@@ -70,8 +70,8 @@ def convert_to_dict_if_needed(value):
 
 # --- Hàm tính điểm có trọng số ---
 def weighted_rank(vote_average, vote_count):
-    if (vote_count == 0 or vote_average == 0):
-        return 0
+    # if (vote_count == 0 or vote_average == 0):
+    #     return 0
     return ((vote_count / (vote_count + m)) * vote_average) + ((m / (vote_count + m)) * C)
 
 # --- Hàm tính giá trị trung bình và ngưỡng m ---
@@ -179,7 +179,7 @@ def sort_movies_by_score(movies, top_n=10):
         results.append(movie)
 
     # Sắp xếp danh sách theo điểm số
-    sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+    sorted_results = sorted(results, key=lambda x: x["score"])#, reverse=True)
     return sorted_results[:top_n]
 
 # Function to sort by popularity (descending)

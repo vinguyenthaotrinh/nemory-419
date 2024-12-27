@@ -84,7 +84,7 @@ def top_movie():
     print("Top movie")
     movies = cs.find_movie_ids_by_filters("", "", "")
     movies = cs.get_movies_information_from_ids(movies)
-    movies = cs.sort_by_popularity(movies, 40)
+    movies = cs.sort_movies_by_score(movies, 40)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("TopMovie_list"):
