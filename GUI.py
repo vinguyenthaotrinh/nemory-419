@@ -76,6 +76,7 @@ def switch_ui(hide_ui, show_ui):
             isFindFav = False
         elif (hide_ui == "Like Window"):
             isFindFav = True
+        filter_movies()
     if dpg.does_item_exist(hide_ui):
         dpg.configure_item(hide_ui, show=False) 
     if hide_ui == "Search UI":      
@@ -237,6 +238,7 @@ def Pre_filter_movie():
 
 def filter_movies():
     global genre_selected, country_selected, release_year_selected, sort_selected
+    global isFindFav, likeMovies
 
     genre = dpg.get_value(genre_selected)
     country = dpg.get_value(country_selected)
@@ -269,8 +271,10 @@ def filter_movies():
 
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
-    display_text = f"Keyword: {condition_text} movies" if conditions else "There are no movies that match your request."
-
+    if not isFindFav:
+        display_text = f"Keyword: {condition_text} movies" if conditions else "There are no movies that match your request."
+    elif isFindFav:
+        display_text = f"Find your favorite movies that match request"
     # Cập nhật dòng text trên UI
     if dpg.does_item_exist("filter_text"):
         dpg.set_value("filter_text", display_text)
@@ -302,7 +306,9 @@ def filter_movies():
     
     filtered_ids = cs.find_movie_ids_by_filters(genre, year, country)
     final_movie_ids = set(filtered_ids).intersection(movie_ids)
-
+    
+    if isFindFav:
+        final_movie_ids = set(final_movie_ids).intersection(likeMovies)
     
     movies = cs.get_movies_information_from_ids(final_movie_ids)
     movies = cs.sort_by_popularity(movies, 40)
@@ -965,7 +971,7 @@ with dpg.window(label="Like", tag="Like Window", show=False):
     show_ui = "Like Window"
     dpg.add_image(texture_id)
 
-    find_fav_button = dpg.add_image_button(texture_tag=find_fav_icon, pos=(800, 85), width=50, height=50,
+    find_fav_button = dpg.add_image_button(texture_tag=find_fav_icon, pos=(850, 80), width=50, height=50,
                     frame_padding=0,
                     background_color=(0, 0, 0, 0),
                     callback=lambda: switch_ui("Like Window", "Search UI"))
