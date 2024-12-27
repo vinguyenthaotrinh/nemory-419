@@ -415,9 +415,9 @@ def show_movie_details(sender, app_data, user_data):
                             dpg.bind_item_font(titleM, titlemovieText)
                             star_button = dpg.add_image_button(
                                 texture_tag=tmp,  # Assuming tmp is a valid texture tag
-                                width=50,
-                                height=50,
-                                pos=(700, 30),
+                                width=30,
+                                height=30,
+                                pos=(730, 30),
                                 background_color=(0, 0, 0, 0),
                                 callback=toggle_star,
                                 user_data="star_button"
@@ -1006,7 +1006,7 @@ def load_image(file_path):
     return width, height, 4, data
 
 def generateSearch():
-    movies = image_search.search_movie_by_image("search.png")
+    movies = image_search.search_movie_by_image("search.png", 30)
     movies = cs.get_movies_information_from_ids(movies)
     
     # Cập nhật danh sách phim hiển thị

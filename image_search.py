@@ -15,8 +15,8 @@ def preprocess_image():
 
 st = preprocess_image()
 
-def search_movie_by_image(image_path):
-    similar_images = st.get_similar_images(image_path=image_path, number_of_images=10)
+def search_movie_by_image(image_path, num_of_images=10):
+    similar_images = st.get_similar_images(image_path=image_path, number_of_images=num_of_images)
     movie_ids = [path.split('/')[-1].split('.')[0] for _, path in similar_images.items()]
     return movie_ids
 
