@@ -892,17 +892,26 @@ with dpg.window(label="Like", tag="Like Window", show=False):
     show_ui = "Like Window"
     dpg.add_image(texture_id)
     
-    dpg.add_text("SOME OF YOUR FAVORITE MOVIES", tag="like_text", color=(255, 255, 255), pos=(300,110))
+    dpg.add_text("SOME OF YOUR FAVORITE MOVIES", tag="like_text", color=(255, 255, 255), pos=(350,90))
     dpg.bind_item_font("like_text", title)
 
     headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Like Window", "Primary Window"), pos=(130, 42))
     dpg.bind_item_font(headerGen, header)
     dpg.bind_item_theme(headerGen, transparent_button_theme)
 
-    with dpg.child_window(tag="LikeMovie_list", width=800, height=240, pos=(100, 180)):
+    with dpg.child_window(tag="LikeMovie_list", width=800, height=240, pos=(100, 130)):
         like_movie()
 
     dpg.bind_item_theme("LikeMovie_list", child_window_theme)
+    
+    # recommend list
+    dpg.add_text("RECOMMEND MOVIES", tag="recom_text", color=(255, 255, 255), pos=(400,400))
+    dpg.bind_item_font("recom_text", title)
+    
+    with dpg.child_window(tag="Recommd_list", width=800, height=240, pos=(100, 440)):
+        like_movie()
+
+    dpg.bind_item_theme("Recommd_list", child_window_theme)
 
 
 with dpg.window(label="Movie Details", tag="DetailUI", show=False):
