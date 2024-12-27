@@ -282,14 +282,6 @@ def filter_movies():
     else:
         dpg.add_text(display_text, tag="filter_text", parent="Search UI", color=(255, 255, 255),  pos=(100,110))
 
-
-    #ghép back filter vào movies = filter (genre, country, year)
-    # filtered_movies = [movie for movie in movies if
-    #                    (genre == "" or movie["genre"] == genre) and
-    #                    (country == "" or movie["country"] == country) and
-    #                    (year == "" or str(movie["year"]) == year)]
-
-    #Ghép back sort by Popularity, Rating, Latest Movie
     movie_ids = cs.find_movie_ids_by_filters(genre, year, country)
 
     if (keyword != ""):
@@ -782,6 +774,8 @@ with dpg.texture_registry():
     bgExtra = dpg.add_static_texture(width1, height1, data1)
     width2, height2, channels2, data2 = dpg.load_image("asset/backicon.png")
     back_icon = dpg.add_static_texture(width2, height2, data2)
+    width3, height3, channels3, data3 = dpg.load_image("asset/chatbot.png")
+    chatbot_icon = dpg.add_static_texture(width3, height3, data3)
     width2, height2, channels2, data2 = dpg.load_image("asset/start_like.png")
     like_icon = dpg.add_static_texture(width2, height2, data2)
     width2, height2, channels2, data2 = dpg.load_image("asset/start_nolike.png")
@@ -794,6 +788,8 @@ with dpg.texture_registry():
     add_image_icon = dpg.add_static_texture(width2, height2, data2)
     width2, height2, channels2, data2 = dpg.load_image("asset/find_fav.png")
     find_fav_icon = dpg.add_static_texture(width2, height2, data2)
+
+    
     
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
@@ -810,6 +806,8 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 
     dpg.draw_text((380, 140), "THE BEST MOVIES OF ALL TIME", color=(255, 255, 255, 255), size=20, tag="top_text")
     dpg.bind_item_font("top_text", title)
+
+    
     
     image_search_button = dpg.add_image_button(texture_tag=image_search_icon, pos=(905, 90), width=30, height=30, 
                         frame_padding=0,
@@ -882,6 +880,13 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
         callback=lambda: switch_ui("Primary Window", "Like Window")
     )
     dpg.bind_item_theme(star_button, theme_button_back)
+
+    chatbot_icon_button = dpg.add_image_button(texture_tag=chatbot_icon, pos=(880, 530), width=125, height=105, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: back("Primary Window", "Image Search Window"))
+    dpg.bind_item_theme(chatbot_icon_button, theme_button_back)
+
 
 with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.add_image(texture_id)
