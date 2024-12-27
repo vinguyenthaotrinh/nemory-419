@@ -91,3 +91,16 @@ def input_movie_id():
 #         response = requests.get(poster_url)
 #         img = Image.open(BytesIO(response.content))
 #         img.show()  # Hiển thị hình ảnh
+
+def crawl_poster():
+    with open('dataset/movies.json', 'r', encoding='utf-8') as file:
+        movies_data = json.load(file)   
+
+    for movie_id, movie in movies_data.items():  # Iterate over key-value pairs
+        try:
+            poster_url = get_poster_image(movie_id)  # Use the key as the movie ID
+            print(f"Poster URL for {movie['title']}: {poster_url}")
+        except Exception as e:
+            print(f"Lỗi khi tải poster cho phim {movie.get('title', 'Unknown')}: {e}")
+
+crawl_poster()
