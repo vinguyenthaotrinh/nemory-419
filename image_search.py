@@ -13,6 +13,8 @@ def preprocess_image():
     st.run_index()  # This will now run without asking for user input
     return st
 
+st = preprocess_image()
+
 def search_movie_by_image(st, image_path):
     similar_images = st.get_similar_images(image_path=image_path, number_of_images=10)
     movie_ids = [path.split('/')[-1].split('.')[0] for _, path in similar_images.items()]

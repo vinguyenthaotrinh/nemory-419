@@ -12,6 +12,7 @@ import shutil
 import os
 from PIL import Image
 import recommend as rc
+import image_search
 
 global recommender
 recommender = rc.MovieRecommender()
@@ -984,6 +985,44 @@ def load_image(file_path):
     data = image.convert("RGBA").tobytes()  # Convert the image to RGBA byte data
     return width, height, 4, data
 
+def generateSearch():
+    movies = image_search.search_movie_by_image("search.png")
+    movies = cs.get_movies_information_from_ids(movies)
+    
+    # Cập nhật danh sách phim hiển thị
+    if not dpg.does_item_exist("ImageResult_list"):
+        print("Error: 'ImageResult_list' does not exist!")
+        return
+
+    dpg.delete_item("ImageResult_list", children_only=True)  # Xóa kết quả cũ
+
+    if dpg.does_item_exist("ImageResultMovieTextureRegistry"):
+        dpg.delete_item("ImageResultMovieTextureRegistry")
+
+    if movies:
+        with dpg.texture_registry(tag="ImageResultMovieTextureRegistry") as reg_id:
+            row = None  # Dùng để tạo một hàng mới
+            for idx, movie in enumerate(movies):
+                if idx % 4 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
+                    row = dpg.add_group(parent="ImageResult_list", horizontal=True, horizontal_spacing=60)
+
+                poster_path = gp.get_poster_image(movie['id'])
+                try:
+                    width, height, channels, data = dpg.load_image(poster_path)
+                    texture_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+
+                    with dpg.group(parent=row, horizontal=False):
+                        dpg.add_image_button(texture_id, width=100, height=150, callback=show_movie_details, user_data=movie)
+                        dpg.add_spacer(width=25)
+                        titletext = dpg.add_text(f"{movie['title']}", wrap=110)
+                        dpg.add_spacer(width=25)
+                        dpg.bind_item_font(titletext, titleMG)
+
+                except Exception as e:
+                    print(f"Could not load image {poster_path}: {e}")
+    else:
+        dpg.add_text(f"No top movies found", parent="ImageResult_list")
+    
 # here
 def drop(data, keys):
     print(f'{data}')
@@ -1014,6 +1053,8 @@ def drop(data, keys):
         tmp_id = dpg.add_static_texture(width, height, data, parent=reg_id)
         with dpg.group(parent=row, horizontal=False):
             dpg.add_image(tmp_id, width=140, height=200, pos=(10, 10))
+            
+    generateSearch()
 
 
 # Helper function to load image data into texture format
