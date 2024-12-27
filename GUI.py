@@ -7,6 +7,10 @@ import semantics_overview as so
 import title_search as ts
 import json
 import category_search as cs
+import DearPyGui_DragAndDrop as dpg_dnd
+import shutil
+import os
+from PIL import Image
 import recommend as rc
 
 global recommender
@@ -21,6 +25,9 @@ global idDetailMovies
 idDetailMovies = ""
 global likeMovies
 likeMovies = cs.read_lines_from_file("dataset/likes.txt")
+
+dpg.create_context()
+dpg_dnd.initialize()
 
 genres = [
     "Select Genre",
@@ -166,10 +173,7 @@ def like_movie():
         
 def recommend_movie():
     global recommender, likeMovies
-    print("CHECK")
-    print(likeMovies)
-    movies = recommender.find_similar_movies(likeMovies, 40)
-    print(movies)
+    movies = recommender.find_similar_movies(likeMovies, 20)
 
     # Cập nhật danh sách phim hiển thị
     if not dpg.does_item_exist("Recommd_list"):
@@ -491,9 +495,9 @@ def toggle_star(user_data):
         print(likeMovies)
     cs.save_list_to_file(likeMovies, "dataset/likes.txt")
     like_movie()
-    recommend_movie()
     button_tag = user_data
     dpg.configure_item(button_tag, texture_tag=new_image)
+    recommend_movie()
 
 def search_movies(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
@@ -769,6 +773,13 @@ with dpg.texture_registry():
     like_icon = dpg.add_static_texture(width2, height2, data2)
     width2, height2, channels2, data2 = dpg.load_image("asset/start_nolike.png")
     unlike_icon = dpg.add_static_texture(width2, height2, data2)
+    width2, height2, channels2, data2 = dpg.load_image("asset/image_search.png")
+    image_search_icon = dpg.add_static_texture(width2, height2, data2)
+    width2, height2, channels2, data2 = dpg.load_image("asset/star_white.png")
+    star_icon = dpg.add_static_texture(width2, height2, data2)
+    width2, height2, channels2, data2 = dpg.load_image("asset/add_image.png")
+    add_image_icon = dpg.add_static_texture(width2, height2, data2)
+    
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
         dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0), category=dpg.mvThemeCat_Core)  # Nền bình thường (trong suốt)
@@ -784,6 +795,12 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
 
     dpg.draw_text((380, 140), "THE BEST MOVIES OF ALL TIME", color=(255, 255, 255, 255), size=20, tag="top_text")
     dpg.bind_item_font("top_text", title)
+    
+    image_search_button = dpg.add_image_button(texture_tag=image_search_icon, pos=(905, 90), width=30, height=30, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: switch_ui("Primary Window", "Image Search Window"))
+    dpg.bind_item_theme(image_search_button, theme_button_back)
 
     with dpg.group(pos=(335, 35), width = 110, height = 100):
         dropdown_search = dpg.add_combo(
@@ -842,8 +859,8 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     dpg.bind_item_theme("TopMovie_list", child_window_theme)
     star_button = dpg.add_image_button(
         texture_tag=like_icon,  # Initial image
-        width=50, 
-        height=50, 
+        width=40, 
+        height=40, 
         pos=(50, 30),
         frame_padding=0,
         background_color=(0, 0, 0, 0),
@@ -933,6 +950,8 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.bind_item_theme(button_search1, transparent_button_theme)
     dpg.bind_item_font(button_search1, title)
     
+
+    
 with dpg.window(label="Like", tag="Like Window", show=False):
     show_ui = "Like Window"
     dpg.add_image(texture_id)
@@ -957,8 +976,77 @@ with dpg.window(label="Like", tag="Like Window", show=False):
         recommend_movie()
 
     dpg.bind_item_theme("Recommd_list", child_window_theme)
+    
+# Helper function to load image data into texture format
+def load_image(file_path):
+    image = Image.open(file_path)
+    width, height = image.size
+    data = image.convert("RGBA").tobytes()  # Convert the image to RGBA byte data
+    return width, height, 4, data
+
+# here
+def drop(data, keys):
+    print(f'{data}')
+    print(f'{keys}')
+    
+    # Get the file path (assuming data contains a list with the image file path)
+    file_path = data[0]  # Assuming data is a list like ['D:\\nemory--cs419\\poster\\11.jpg']
+    
+    # Define the destination path as current directory with the name 'search.png'
+    dest_path = os.path.join(os.getcwd(), 'search.png')
+    
+    # Copy the image to the current directory with the new name
+    shutil.copy(file_path, dest_path)
+    print(f"Image copied to: {dest_path}")
+    
+    if not dpg.does_item_exist("SearchImage"):
+        print("Error: 'SearchImage' does not exist!")
+        return
+
+    dpg.delete_item("SearchImage", children_only=True)  # Xóa kết quả cũ
+
+    if dpg.does_item_exist("SearchImageTextureRegistry"):
+        dpg.delete_item("SearchImageTextureRegistry")
+
+    with dpg.texture_registry(tag="SearchImageTextureRegistry") as reg_id:
+        row = dpg.add_group(parent="SearchImage", horizontal=True, horizontal_spacing=60)
+        width, height, channels, data = dpg.load_image("search.png")
+        tmp_id = dpg.add_static_texture(width, height, data, parent=reg_id)
+        with dpg.group(parent=row, horizontal=False):
+            dpg.add_image(tmp_id, width=140, height=200, pos=(10, 10))
 
 
+# Helper function to load image data into texture format
+def load_image(file_path):
+    image = Image.open(file_path)  # Open the image using PIL
+    width, height = image.size
+    data = image.convert("RGBA").tobytes()  # Convert the image to RGBA byte data
+    return width, height, 4, data
+
+# Create the main window with image search and drop functionality
+with dpg.handler_registry():
+    # Define the drop handler specifically for the SearchImage window
+    dpg_dnd.set_drop(drop)
+
+with dpg.window(label="Image Search", tag="Image Search Window", show=False):
+    dpg.add_image(texture_id)
+
+    headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Image Search Window", "Primary Window"), pos=(130, 42))
+    dpg.bind_item_font(headerGen, header)
+    dpg.bind_item_theme(headerGen, transparent_button_theme)
+
+    # Create the SearchImage child window
+    with dpg.child_window(tag="SearchImage", width=160, height=220, pos=(60, 130)):
+        dpg.add_image(add_image_icon, width=100, height=100, pos=(30, 60))
+
+    dpg.bind_item_theme("SearchImage", child_window_theme)
+    
+    # Create the ImageResult_list window
+    with dpg.child_window(tag="ImageResult_list", width=640, height=540, pos=(280, 130)):
+        dpg.add_text("Results will appear here.") 
+
+    dpg.bind_item_theme("ImageResult_list", child_window_theme)
+    
 with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     dpg.add_image(bgExtra)
     headerDetail = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("DetailUI", "Primary Window"), pos=(80, 50))      
@@ -971,8 +1059,7 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     dpg.bind_item_theme(headerDetail, transparent_button_theme)
     with dpg.child_window(tag="DetailContent", width=800, height=480, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
-    dpg.bind_item_theme("DetailContent", child_window_theme)
-    
+    dpg.bind_item_theme("DetailContent", child_window_theme) 
         
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)
