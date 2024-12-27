@@ -75,9 +75,6 @@ def switch_ui(hide_ui, show_ui):
 
     if dpg.does_item_exist(show_ui):
         dpg.configure_item(show_ui, show=True)
-    
-    if show_ui == "Like Window" or hide_ui == "Like Window" or show_ui == "Primary Window":
-        like_movie()
 
 def back (hide_ui, show_ui):
     dpg.hide_item(hide_ui)
@@ -902,8 +899,8 @@ with dpg.window(label="Like", tag="Like Window", show=False):
     dpg.bind_item_font(headerGen, header)
     dpg.bind_item_theme(headerGen, transparent_button_theme)
 
-    with dpg.child_window(tag="LikeMovie_list", width=800, height=480, pos=(100, 180)):
-        dpg.add_text("Results will appear here.") 
+    with dpg.child_window(tag="LikeMovie_list", width=800, height=240, pos=(100, 180)):
+        like_movie()
 
     dpg.bind_item_theme("LikeMovie_list", child_window_theme)
 

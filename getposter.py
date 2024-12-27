@@ -103,4 +103,5 @@ def crawl_poster():
         except Exception as e:
             print(f"Lỗi khi tải poster cho phim {movie.get('title', 'Unknown')}: {e}")
 
-crawl_poster()
+if __name__ == "__main__":
+    crawl_poster()
