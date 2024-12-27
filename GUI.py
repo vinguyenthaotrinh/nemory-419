@@ -491,7 +491,7 @@ def toggle_star(user_data):
         print(likeMovies)
     cs.save_list_to_file(likeMovies, "dataset/likes.txt")
     like_movie()
-    # recommend_movie()
+    recommend_movie()
     button_tag = user_data
     dpg.configure_item(button_tag, texture_tag=new_image)
 
