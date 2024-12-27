@@ -70,6 +70,12 @@ with dpg.value_registry():
 
     
 def switch_ui(hide_ui, show_ui):
+    global isFindFav
+    if (show_ui == "Search UI"):   
+        if (hide_ui == "Primary Window"):
+            isFindFav = False
+        elif (hide_ui == "Like Window"):
+            isFindFav = True
     if dpg.does_item_exist(hide_ui):
         dpg.configure_item(hide_ui, show=False) 
     if hide_ui == "Search UI":      
@@ -780,6 +786,8 @@ with dpg.texture_registry():
     star_icon = dpg.add_static_texture(width2, height2, data2)
     width2, height2, channels2, data2 = dpg.load_image("asset/add_image.png")
     add_image_icon = dpg.add_static_texture(width2, height2, data2)
+    width2, height2, channels2, data2 = dpg.load_image("asset/find_fav.png")
+    find_fav_icon = dpg.add_static_texture(width2, height2, data2)
     
 with dpg.theme() as transparent_button_theme:
     with dpg.theme_component(dpg.mvButton):
@@ -956,6 +964,12 @@ with dpg.window(label="Search", tag="Search UI", show=False):
 with dpg.window(label="Like", tag="Like Window", show=False):
     show_ui = "Like Window"
     dpg.add_image(texture_id)
+
+    find_fav_button = dpg.add_image_button(texture_tag=find_fav_icon, pos=(800, 85), width=50, height=50,
+                    frame_padding=0,
+                    background_color=(0, 0, 0, 0),
+                    callback=lambda: switch_ui("Like Window", "Search UI"))
+    dpg.bind_item_theme(find_fav_button, theme_button_back) 
     
     dpg.add_text("SOME OF YOUR FAVORITE MOVIES", tag="like_text", color=(255, 255, 255), pos=(350,90))
     dpg.bind_item_font("like_text", title)
