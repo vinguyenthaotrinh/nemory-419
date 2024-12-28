@@ -13,12 +13,13 @@ import os
 from PIL import Image
 import recommend as rc
 import image_search
+import chatbot_BE 
 
 global recommender
 recommender = rc.MovieRecommender()
 movies_file = "dataset/movies.json"
 movies_data = fbg.load_json(movies_file)
-current_ui = "Primary Window"
+current_ui = ""
 cs.load_data("dataset/genres_inverted.json", "dataset/movies.json", "dataset/production_countries_inverted.json", "dataset/release_year_inverted.json")
 global is_liked
 is_liked = True 
@@ -70,7 +71,7 @@ with dpg.value_registry():
 
     
 def switch_ui(hide_ui, show_ui):
-    global isFindFav
+    global isFindFav, current_ui
     if (show_ui == "Search UI"):   
         if (hide_ui == "Primary Window"):
             isFindFav = False
@@ -93,10 +94,13 @@ def switch_ui(hide_ui, show_ui):
 
     if dpg.does_item_exist(show_ui):
         dpg.configure_item(show_ui, show=True)
+    current_ui = show_ui
 
 def back (hide_ui, show_ui):
+    global current_ui
     dpg.hide_item(hide_ui)
     dpg.show_item(show_ui)
+    current_ui = show_ui
 
 def top_movie():
     print("Top movie")
@@ -217,20 +221,6 @@ def recommend_movie():
     else:
         dpg.add_text(f"No like movies found", parent="Recommd_list")
 
-def center_text_in_window(window_width, text_tag, text, font_size):
-    
-    # Giả sử chiều cao font và chiều rộng mỗi ký tự tạm tính
-    text_width = len(text) * (font_size * 0.55)  # Ước lượng chiều rộng ký tự
-    print(text_width)
-    text_height = font_size                    
-    
-    # Tính toán vị trí chính giữa
-    x_pos = (window_width - text_width) / 2
-    y_pos = 110
-    
-    # Cập nhật vị trí cho text
-    dpg.configure_item(text_tag, pos=(x_pos, y_pos))
-
 def Pre_filter_movie():
     current_state["filters"]["genre"] = None
     current_state["filters"]["country"] = None
@@ -345,8 +335,6 @@ def filter_movies():
                     print(f"Could not load image {poster_path}: {e}")
     else:
         dpg.add_text(f"No matching movies found", parent="Movie_list")
-
-
 
 def on_select(sender, app_data, user_data):
     if user_data == "genre":
@@ -714,6 +702,95 @@ def dropdown_callback(sender, app_data, user_data):
     filter_movies()
     switch_ui("Primary Window", "Search UI")
 
+chat_history = []
+
+def send_message():
+    global chat_history
+    query_data = dpg.get_item_user_data("input_text")
+    clarification_mode = False
+    original_query = ""
+
+    if query_data is not None:
+        original_query, clarification_mode = query_data
+
+    query = dpg.get_value("input_text")
+    if query.strip() == "":
+        return
+
+    if clarification_mode:
+        dpg.add_text(f"You (Clarification): {query}", parent="chat_window", color=[255, 255, 255], wrap= 700 )
+        response, elapsed_time = chatbot_BE.get_clarification_response(original_query, query, chat_history)
+        dpg.set_item_user_data("input_text", None)
+        dpg.configure_item("input_text", hint="Enter your message here...")
+    else:
+        textchat1 = dpg.add_text(f"You: {query}", parent="chat_window", color=[255, 255, 255], wrap=700)
+        dpg.bind_item_font(textchat1, detailText)
+
+        response, elapsed_time = chatbot_BE.get_chatbot_response(query, chat_history)
+
+    dpg.set_value("input_text", "")
+    textchat2 = dpg.add_text(f"Chatbot: {response}", parent="chat_window", color=[100, 150, 255])
+    dpg.bind_item_font(textchat2, detailText)
+
+    dpg.add_text(f"(Response generated in {elapsed_time:.2f} seconds)", parent="chat_window", color=[150, 150, 150])
+
+
+    # Ask for feedback
+    with dpg.group(horizontal=True, parent="chat_window"):
+        dpg.add_text("Helpful?")
+        dpg.add_button(label="Yes", user_data=(query if not clarification_mode else original_query, response, "yes"), callback=handle_feedback)
+        dpg.add_button(label="No", user_data=(query if not clarification_mode else original_query, response, "no"), callback=handle_feedback)
+
+
+def handle_feedback(sender, app_data, user_data):
+    global chat_history
+    query, response, feedback = user_data
+
+    # Disable both Yes/No buttons and highlight the chosen one
+    dpg.configure_item(sender, enabled=False)  # Disable the button that was clicked
+    # Find the other button and disable it
+    if feedback == "yes":
+        dpg.configure_item(sender + 1, enabled=False) # Assuming 'No' button is the next item
+        dpg.set_value(sender - 1, "Helpful? [Yes]") # Set text to indicate 'Yes' was chosen
+    else:
+        dpg.configure_item(sender - 1, enabled=False)  # Assuming 'Yes' button is the previous item
+        dpg.set_value(sender - 2, "Helpful? [No]") # Set text to indicate 'No' was chosen
+
+    if feedback == "yes":
+        dpg.add_text("Chatbot: Glad to hear that!", parent="chat_window", color=[100, 150, 255])
+        chat_history.append((query, response))
+    else:
+        dpg.add_text(
+            "Chatbot: Could you please specify what information you're looking for?",
+            parent="chat_window",
+            color=[100, 150, 255],
+        )
+        # Update the send_message function to handle clarification
+        dpg.set_item_user_data("input_text", (query, True))  # Mark that next input is a clarification
+        dpg.configure_item("input_text", hint="Enter your clarification here...")
+
+def send_clarification(sender, app_data, user_data):
+    global chat_history
+    query = user_data[0]
+    clarification = dpg.get_value("clarification_input")
+    dpg.set_value("clarification_input", "")
+    dpg.delete_item("clarification_input_group")
+    
+    textchat3 = dpg.add_text(f"You: {clarification}", parent="chat_window", color=[255, 255, 255], wrap=700)
+    dpg.bind_item_font(textchat3, detailText)
+
+    response, elapsed_time = chatbot_BE.get_clarification_response(query, clarification, chat_history) # Using the new function
+    textchat4 = dpg.add_text(f"Chatbot: {response}", parent="chat_window", color=[100, 150, 255], wrap=700)
+    dpg.bind_item_font(textchat4, detailText)
+
+    dpg.add_text(f"(Response generated in {elapsed_time:.2f} seconds)", parent="chat_window", color=[150, 150, 150])
+
+    # Ask for feedback again
+    with dpg.group(horizontal=True, parent="chat_window"):
+        dpg.add_text("Helpful? Y/N")
+        dpg.add_button(label="Yes", user_data=(query, response, "yes"), callback=handle_feedback)
+        dpg.add_button(label="No", user_data=(query, response, "no"), callback=handle_feedback)
+
 
 with dpg.theme() as result_background_theme:
     with dpg.theme_component(dpg.mvAll):
@@ -884,12 +961,12 @@ with dpg.window(label="Movie Retrieval Chatbot", tag="Primary Window"):
     chatbot_icon_button = dpg.add_image_button(texture_tag=chatbot_icon, pos=(880, 530), width=125, height=105, 
                         frame_padding=0,
                         background_color=(0, 0, 0, 0),
-                        callback=lambda: back("Primary Window", "Image Search Window"))
+                        callback=lambda: back("Primary Window", "chatbot_window"))
     dpg.bind_item_theme(chatbot_icon_button, theme_button_back)
-
 
 with dpg.window(label="Search", tag="Search UI", show=False):
     dpg.add_image(texture_id)
+    current_ui = "Search UI"
 
     dpg.add_text("keyword", tag="filter_text", color=(255, 255, 255), pos=(100,110))
     dpg.bind_item_font("filter_text", keyword)
@@ -969,11 +1046,16 @@ with dpg.window(label="Search", tag="Search UI", show=False):
     button_search1 = dpg.add_button(label="Search!", pos=(890, 45), callback=search_movies1)
     dpg.bind_item_theme(button_search1, transparent_button_theme)
     dpg.bind_item_font(button_search1, title)
-    
 
+    chatbot_icon_button2 = dpg.add_image_button(texture_tag=chatbot_icon, pos=(880, 530), width=125, height=105, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: back("Search UI", "chatbot_window"))
+    dpg.bind_item_theme(chatbot_icon_button2, theme_button_back)
     
 with dpg.window(label="Like", tag="Like Window", show=False):
     show_ui = "Like Window"
+    current_ui = "Like Window"
     dpg.add_image(texture_id)
 
     find_fav_button = dpg.add_image_button(texture_tag=find_fav_icon, pos=(850, 80), width=50, height=50,
@@ -1002,6 +1084,12 @@ with dpg.window(label="Like", tag="Like Window", show=False):
         recommend_movie()
 
     dpg.bind_item_theme("Recommd_list", child_window_theme)
+
+    chatbot_icon_button5 = dpg.add_image_button(texture_tag=chatbot_icon, pos=(880, 530), width=125, height=105, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: back("Like Window", "chatbot_window"))
+    dpg.bind_item_theme(chatbot_icon_button5, theme_button_back)
     
 # Helper function to load image data into texture format
 def load_image(file_path):
@@ -1047,6 +1135,7 @@ def generateSearch():
                     print(f"Could not load image {poster_path}: {e}")
     else:
         dpg.add_text(f"No top movies found", parent="ImageResult_list")
+    
     
 # here
 def drop(data, keys):
@@ -1095,6 +1184,7 @@ with dpg.handler_registry():
     dpg_dnd.set_drop(drop)
 
 with dpg.window(label="Image Search", tag="Image Search Window", show=False):
+    current_ui = "Image Search Window"
     dpg.add_image(texture_id)
 
     headerGen = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("Image Search Window", "Primary Window"), pos=(130, 42))
@@ -1112,8 +1202,15 @@ with dpg.window(label="Image Search", tag="Image Search Window", show=False):
         dpg.add_text("Results will appear here.") 
 
     dpg.bind_item_theme("ImageResult_list", child_window_theme)
+
+    chatbot_icon_button3 = dpg.add_image_button(texture_tag=chatbot_icon, pos=(880, 530), width=125, height=105, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: back("Image Search Window", "chatbot_window"))
+    dpg.bind_item_theme(chatbot_icon_button3, theme_button_back)
     
 with dpg.window(label="Movie Details", tag="DetailUI", show=False):
+    current_ui = "DetailUI"
     dpg.add_image(bgExtra)
     headerDetail = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("DetailUI", "Primary Window"), pos=(80, 50))      
     back_button = dpg.add_image_button(texture_tag=back_icon, pos=(40, 50), width=30, height=30, 
@@ -1126,7 +1223,38 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     with dpg.child_window(tag="DetailContent", width=800, height=480, pos=(100, 150)):
         dpg.add_text("Results will appear here.") 
     dpg.bind_item_theme("DetailContent", child_window_theme) 
+
+    chatbot_icon_button4 = dpg.add_image_button(texture_tag=chatbot_icon, pos=(880, 530), width=125, height=105, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: back("DetailUI", "chatbot_window"))
+    dpg.bind_item_theme(chatbot_icon_button4, theme_button_back)
         
+with dpg.window(label="Chatbot", tag="chatbot_window", show=False):
+    dpg.add_image(bgExtra)
+    headerChatbot = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("chatbot_window", "Primary Window"), pos=(80, 50))      
+    backChat_button = dpg.add_image_button(texture_tag=back_icon, pos=(40, 50), width=30, height=30, 
+                        frame_padding=0,
+                        background_color=(0, 0, 0, 0),
+                        callback=lambda: back("chatbot_window", "Primary Window"))
+    
+    dpg.bind_item_font(headerChatbot, header)
+    dpg.bind_item_theme(headerChatbot, transparent_button_theme)
+
+    dpg.add_child_window(tag="chat_window", width=800, height=400, pos=(80,130))
+    dpg.bind_item_theme("chat_window", child_window_theme) 
+
+
+    with dpg.group(horizontal=True, pos=(80,550)):
+        dpg.add_input_text(hint="Enter your me ssage here...", tag="input_text", on_enter=True, callback=send_message, width= 800, height=30, multiline=True)
+        dpg.bind_item_theme("input_text", input_theme)
+        dpg.bind_item_font("input_text", title)
+
+        button_sendchat = dpg.add_button(label="Send", callback=send_message, width = 70)
+        dpg.bind_item_theme(button_sendchat, transparent_button_theme)
+        dpg.bind_item_font(button_sendchat, title)
+        
+
 # Tạo viewport và hiển thị
 dpg.create_viewport(title="Movie Retrieval Chatbot", width=1000, height=711)
 dpg.setup_dearpygui()
