@@ -22,7 +22,7 @@ movies_data = load_json("dataset/movies.json")
 
 def get_poster_image(id):
     # Đường dẫn file poster
-    id = int(id)
+    id = str(id)
     poster_path = f"poster/{id}.jpg"
     default_path = "poster/default.jpg"
     
