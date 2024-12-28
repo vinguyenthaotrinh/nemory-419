@@ -7,7 +7,7 @@ import semantics_overview as so
 import title_search as ts
 import json
 import category_search as cs
-# import DearPyGui_DragAndDrop as dpg_dnd
+#import DearPyGui_DragAndDrop as dpg_dnd
 import shutil
 import os
 from PIL import Image
@@ -31,7 +31,7 @@ global likeMovies
 likeMovies = cs.read_lines_from_file("dataset/likes.txt")
 
 dpg.create_context()
-# dpg_dnd.initialize()
+#dpg_dnd.initialize()
 
 genres = [
     "Select Genre",
@@ -75,7 +75,8 @@ with dpg.value_registry():
 def switch_ui(hide_ui, show_ui):
     global isFindFav, current_ui, backUI
     backUI = hide_ui
-    
+    print("SWITCH")
+    print(backUI)
     if (show_ui == "Search UI"):   
         if (hide_ui == "Primary Window"):
             isFindFav = False
@@ -84,6 +85,7 @@ def switch_ui(hide_ui, show_ui):
             filter_movies()
     if (show_ui == "Primary Window"):   
         isFindFav = False
+            
     if dpg.does_item_exist(hide_ui):
         dpg.configure_item(hide_ui, show=False) 
     if hide_ui == "Search UI":      
@@ -268,6 +270,9 @@ def filter_movies():
 
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
+    print ("DEBUG")
+    print(isFindFav)
+
     if not isFindFav:
         display_text = f"Keyword: {condition_text} movies" if conditions else "There are no movies that match your request."
     elif isFindFav:
@@ -500,6 +505,7 @@ def toggle_star(user_data):
     recommend_movie()
 
 def search_movies(sender, app_data, user_data):
+    global likeMovies, isFindFav
     # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput")
     search_type = dpg.get_value("SearchTypeDropdown")
@@ -520,7 +526,6 @@ def search_movies(sender, app_data, user_data):
         print ("semantic")
         top_movies = so.search(user_query)
 
-    print(top_movies)
     if not user_query.strip():
         print("Please enter a search query.")
         return
@@ -584,6 +589,7 @@ def search_movies(sender, app_data, user_data):
 
 def search_movies1(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
+    global likeMovies, isFindFav
     user_query = dpg.get_value("SearchInput1")
     search_type = dpg.get_value("SearchTypeDropdown1")
 
@@ -616,32 +622,43 @@ def search_movies1(sender, app_data, user_data):
 
     # Gọi hàm search và nhận kết quả
  #   top_movies = search.search(user_query)
-
+ 
+    
+    top_movies = (
+        [str(movie['id']) for movie in top_movies] if isinstance(top_movies, list) 
+        else list(map(str, top_movies['id'].tolist()))
+    )
+    # top_movies = set(map(int, set(top_movies)))
+    if isFindFav:
+        print(likeMovies)
+        print(top_movies)
+        top_movies = set(top_movies).intersection(likeMovies)
+        print("Hecke")
+        
+    top_movies = cs.get_movies_information_from_ids(top_movies)
+    
     if not dpg.does_item_exist("Movie_list"):
         print("Error: 'Movie_list' does not exist!")
         return
-
+    print("CHECK")
+    print(top_movies)
+    
     dpg.delete_item("Movie_list", children_only=True)  # Xóa kết quả cũ
 
     if dpg.does_item_exist("MovieTextureRegistry"):
         dpg.delete_item("MovieTextureRegistry")
 
     # Check if top_movies is valid
-    if top_movies is None or top_movies.empty:
+    if not top_movies:
         dpg.add_text("No matching movies found", parent="Movie_list")
         return
+    
+
 
     # Display movies with posters and details
     with dpg.texture_registry(tag="MovieTextureRegistry") as reg_id:
         row = None  # Container for a row of movies
-        for idx, (_, row_data) in enumerate(top_movies.iterrows()):  # Iterate over DataFrame rows
-            movie = {
-                "title": row_data["title"],
-                "id": row_data["id"],
-                "vote_average": row_data["vote_average"],
-                "release_date": row_data["release_date"],
-                "overview": row_data["overview"],
-            }
+        for idx, movie in enumerate(top_movies):  # Iterate over DataFrame rows
 
             if idx % 5 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
                 row = dpg.add_group(parent="Movie_list", horizontal=True, horizontal_spacing=60)
@@ -1228,6 +1245,8 @@ with dpg.window(label="Image Search", tag="Image Search Window", show=False):
 with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     current_ui = "DetailUI"
     dpg.add_image(bgExtra)
+    print("CHECK")
+    print(backUI)
     headerDetail = dpg.add_button(label="NEMORY", callback=lambda: switch_ui("DetailUI", "Primary Window"), pos=(80, 50))      
     back_button = dpg.add_image_button(texture_tag=back_icon, pos=(40, 50), width=30, height=30, 
                         frame_padding=0,
