@@ -79,6 +79,8 @@ def switch_ui(hide_ui, show_ui):
         elif (hide_ui == "Like Window"):
             isFindFav = True
             filter_movies()
+    if (show_ui == "Primary Window"):   
+        isFindFav = False
     if dpg.does_item_exist(hide_ui):
         dpg.configure_item(hide_ui, show=False) 
     if hide_ui == "Search UI":      
