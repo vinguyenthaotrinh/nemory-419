@@ -487,9 +487,9 @@ def toggle_star(user_data):
         print(idDetailMovies)
         print(likeMovies)
     cs.save_list_to_file(likeMovies, "dataset/likes.txt")
-    like_movie()
     button_tag = user_data
     dpg.configure_item(button_tag, texture_tag=new_image)
+    like_movie()
     recommend_movie()
 
 def search_movies(sender, app_data, user_data):
