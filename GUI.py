@@ -551,7 +551,7 @@ def search_movies(sender, app_data, user_data):
             print(row_data)
             movie = {
                 "title": row_data["title"],
-                "id": row_data["id"],
+                "id": str(row_data["id"]),
                 "vote_average": row_data["vote_average"],
                 "release_date": row_data["release_date"],
                 "overview": row_data["overview"],
