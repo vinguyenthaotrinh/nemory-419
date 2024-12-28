@@ -15,7 +15,8 @@ import recommend as rc
 import image_search
 import chatbot_BE 
 
-global recommender, isFindFav
+global recommender, isFindFav, backUI
+backUI = ""
 isFindFav = False
 recommender = rc.MovieRecommender()
 movies_file = "dataset/movies.json"
@@ -72,7 +73,9 @@ with dpg.value_registry():
 
     
 def switch_ui(hide_ui, show_ui):
-    global isFindFav, current_ui
+    global isFindFav, current_ui, backUI
+    backUI = hide_ui
+    
     if (show_ui == "Search UI"):   
         if (hide_ui == "Primary Window"):
             isFindFav = False
@@ -100,7 +103,8 @@ def switch_ui(hide_ui, show_ui):
     current_ui = show_ui
 
 def back (hide_ui, show_ui):
-    global current_ui
+    global current_ui, backUI
+    backUI = hide_ui
     dpg.hide_item(hide_ui)
     dpg.show_item(show_ui)
     current_ui = show_ui
@@ -1228,7 +1232,7 @@ with dpg.window(label="Movie Details", tag="DetailUI", show=False):
     back_button = dpg.add_image_button(texture_tag=back_icon, pos=(40, 50), width=30, height=30, 
                         frame_padding=0,
                         background_color=(0, 0, 0, 0),
-                        callback=lambda: back("DetailUI", "Primary Window"))
+                        callback=lambda: back("DetailUI", backUI))
     dpg.bind_item_theme(back_button, theme_button_back) 
     dpg.bind_item_font(headerDetail, header)
     dpg.bind_item_theme(headerDetail, transparent_button_theme)
