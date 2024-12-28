@@ -270,9 +270,6 @@ def filter_movies():
 
     # Ghép các điều kiện thành chuỗi
     condition_text = ", ".join(conditions)
-    print ("DEBUG")
-    print(isFindFav)
-
     if not isFindFav:
         display_text = f"Keyword: {condition_text} movies" if conditions else "There are no movies that match your request."
     elif isFindFav:
@@ -505,7 +502,6 @@ def toggle_star(user_data):
     recommend_movie()
 
 def search_movies(sender, app_data, user_data):
-    global likeMovies, isFindFav
     # Lấy nội dung tìm kiếm từ ô input
     user_query = dpg.get_value("SearchInput")
     search_type = dpg.get_value("SearchTypeDropdown")
@@ -526,6 +522,7 @@ def search_movies(sender, app_data, user_data):
         print ("semantic")
         top_movies = so.search(user_query)
 
+    print(top_movies)
     if not user_query.strip():
         print("Please enter a search query.")
         return
@@ -589,7 +586,6 @@ def search_movies(sender, app_data, user_data):
 
 def search_movies1(sender, app_data, user_data):
     # Lấy nội dung tìm kiếm từ ô input
-    global likeMovies, isFindFav
     user_query = dpg.get_value("SearchInput1")
     search_type = dpg.get_value("SearchTypeDropdown1")
 
@@ -622,43 +618,32 @@ def search_movies1(sender, app_data, user_data):
 
     # Gọi hàm search và nhận kết quả
  #   top_movies = search.search(user_query)
- 
-    
-    top_movies = (
-        [str(movie['id']) for movie in top_movies] if isinstance(top_movies, list) 
-        else list(map(str, top_movies['id'].tolist()))
-    )
-    # top_movies = set(map(int, set(top_movies)))
-    if isFindFav:
-        print(likeMovies)
-        print(top_movies)
-        top_movies = set(top_movies).intersection(likeMovies)
-        print("Hecke")
-        
-    top_movies = cs.get_movies_information_from_ids(top_movies)
-    
+
     if not dpg.does_item_exist("Movie_list"):
         print("Error: 'Movie_list' does not exist!")
         return
-    print("CHECK")
-    print(top_movies)
-    
+
     dpg.delete_item("Movie_list", children_only=True)  # Xóa kết quả cũ
 
     if dpg.does_item_exist("MovieTextureRegistry"):
         dpg.delete_item("MovieTextureRegistry")
 
     # Check if top_movies is valid
-    if not top_movies:
+    if top_movies is None or top_movies.empty:
         dpg.add_text("No matching movies found", parent="Movie_list")
         return
-    
-
 
     # Display movies with posters and details
     with dpg.texture_registry(tag="MovieTextureRegistry") as reg_id:
         row = None  # Container for a row of movies
-        for idx, movie in enumerate(top_movies):  # Iterate over DataFrame rows
+        for idx, (_, row_data) in enumerate(top_movies.iterrows()):  # Iterate over DataFrame rows
+            movie = {
+                "title": row_data["title"],
+                "id": row_data["id"],
+                "vote_average": row_data["vote_average"],
+                "release_date": row_data["release_date"],
+                "overview": row_data["overview"],
+            }
 
             if idx % 5 == 0:  # Mỗi hàng chứa tối đa 5 bộ phim
                 row = dpg.add_group(parent="Movie_list", horizontal=True, horizontal_spacing=60)
