@@ -739,11 +739,11 @@ def send_message():
     dpg.set_value("input_text", "")
     textchat2 = dpg.add_text(f"Chatbot: {response}", 
                             parent="chat_window", 
-                            color=[100, 150, 255], 
+                            color=[170, 217, 233], 
                             wrap=dpg.get_item_width("chat_window") - 50)  # Dynamic wrapping
     dpg.bind_item_font(textchat2, detailText)
 
-    dpg.add_text(f"(Response generated in {elapsed_time:.2f} seconds)", parent="chat_window", color=[150, 150, 150])
+    dpg.add_text(f"(Response generated in {elapsed_time:.2f} seconds)", parent="chat_window", color=[199, 217, 234])
 
 
     # Ask for feedback

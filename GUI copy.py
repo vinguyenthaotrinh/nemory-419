@@ -15,7 +15,8 @@ import recommend as rc
 import image_search
 import chatbot_BE 
 
-global recommender
+global recommender, isFindFav
+isFindFav = False
 recommender = rc.MovieRecommender()
 movies_file = "dataset/movies.json"
 movies_data = fbg.load_json(movies_file)
@@ -77,7 +78,7 @@ def switch_ui(hide_ui, show_ui):
             isFindFav = False
         elif (hide_ui == "Like Window"):
             isFindFav = True
-        filter_movies()
+            filter_movies()
     if dpg.does_item_exist(hide_ui):
         dpg.configure_item(hide_ui, show=False) 
     if hide_ui == "Search UI":      
@@ -718,21 +719,27 @@ def send_message():
         return
 
     if clarification_mode:
-        dpg.add_text(f"You (Clarification): {query}", parent="chat_window", color=[255, 255, 255], wrap= 700 )
+        dpg.add_text(f"You (Clarification): {query}", parent="chat_window", 
+                    color=[255, 255, 255], wrap= 700,
+                    wrap=dpg.get_item_width("chat_window") - 30 )
         response, elapsed_time = chatbot_BE.get_clarification_response(original_query, query, chat_history)
         dpg.set_item_user_data("input_text", None)
         dpg.configure_item("input_text", hint="Enter your message here...")
     else:
-        textchat1 = dpg.add_text(f"You: {query}", parent="chat_window", color=[255, 255, 255], wrap=700)
+        textchat1 = dpg.add_text(f"You: {query}", parent="chat_window", 
+                                 color=[255, 255, 255], wrap=700, 
+                                 wrap=dpg.get_item_width("chat_window") - 30)
         dpg.bind_item_font(textchat1, detailText)
 
         response, elapsed_time = chatbot_BE.get_chatbot_response(query, chat_history)
 
     dpg.set_value("input_text", "")
-    textchat2 = dpg.add_text(f"Chatbot: {response}", parent="chat_window", color=[100, 150, 255])
+    textchat2 = dpg.add_text(f"Chatbot: {response}", parent="chat_window", 
+                             color=[170, 217, 233], 
+                             wrap=dpg.get_item_width("chat_window") - 30)
     dpg.bind_item_font(textchat2, detailText)
 
-    dpg.add_text(f"(Response generated in {elapsed_time:.2f} seconds)", parent="chat_window", color=[150, 150, 150])
+    dpg.add_text(f"(Response generated in {elapsed_time:.2f} seconds)", parent="chat_window", color=[199, 217, 234])
 
 
     # Ask for feedback
