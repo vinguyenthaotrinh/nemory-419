@@ -719,24 +719,27 @@ def send_message():
         return
 
     if clarification_mode:
-        dpg.add_text(f"You (Clarification): {query}", parent="chat_window", 
-                    color=[255, 255, 255], wrap= 700,
-                    wrap=dpg.get_item_width("chat_window") - 30 )
+        dpg.add_text(f"You (Clarification): {query}", 
+                    parent="chat_window", 
+                    color=[255, 255, 255], 
+                    wrap=dpg.get_item_width("chat_window") - 20)  # Dynamic wrapping
         response, elapsed_time = chatbot_BE.get_clarification_response(original_query, query, chat_history)
         dpg.set_item_user_data("input_text", None)
         dpg.configure_item("input_text", hint="Enter your message here...")
     else:
-        textchat1 = dpg.add_text(f"You: {query}", parent="chat_window", 
-                                 color=[255, 255, 255], wrap=700, 
-                                 wrap=dpg.get_item_width("chat_window") - 30)
+        textchat1 = dpg.add_text(f"You: {query}", 
+                                parent="chat_window", 
+                                color=[255, 255, 255], 
+                                wrap=dpg.get_item_width("chat_window") - 20)  # Dynamic wrapping
         dpg.bind_item_font(textchat1, detailText)
 
         response, elapsed_time = chatbot_BE.get_chatbot_response(query, chat_history)
 
     dpg.set_value("input_text", "")
-    textchat2 = dpg.add_text(f"Chatbot: {response}", parent="chat_window", 
-                             color=[170, 217, 233], 
-                             wrap=dpg.get_item_width("chat_window") - 30)
+    textchat2 = dpg.add_text(f"Chatbot: {response}", 
+                            parent="chat_window", 
+                            color=[170, 217, 233], 
+                            wrap=dpg.get_item_width("chat_window") - 50)  # Dynamic wrapping
     dpg.bind_item_font(textchat2, detailText)
 
     dpg.add_text(f"(Response generated in {elapsed_time:.2f} seconds)", parent="chat_window", color=[199, 217, 234])
@@ -1244,7 +1247,7 @@ with dpg.window(label="Chatbot", tag="chatbot_window", show=False):
                         frame_padding=0,
                         background_color=(0, 0, 0, 0),
                         callback=lambda: back("chatbot_window", "Primary Window"))
-    dpg.bind_item_theme(back_button, theme_button_back)
+    dpg.bind_item_theme(backChat_button, theme_button_back)
     
     dpg.bind_item_font(headerChatbot, header)
     dpg.bind_item_theme(headerChatbot, transparent_button_theme)

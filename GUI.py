@@ -1248,7 +1248,7 @@ with dpg.window(label="Chatbot", tag="chatbot_window", show=False):
                         frame_padding=0,
                         background_color=(0, 0, 0, 0),
                         callback=lambda: back("chatbot_window", "Primary Window"))
-    dpg.bind_item_theme(back_button, theme_button_back)
+    dpg.bind_item_theme(backChat_button, theme_button_back)
     
     dpg.bind_item_font(headerChatbot, header)
     dpg.bind_item_theme(headerChatbot, transparent_button_theme)
