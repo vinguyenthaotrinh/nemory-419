@@ -143,7 +143,7 @@ def get_movie_information(movie_id):
         cast = [member['name'] for member in cast if isinstance(member, dict)]
 
         return {
-            "id": movie_id,
+            "id": str(movie_id),
             "title": movie_details.get("title", "Unknown"),
             "vote_average": movie_details.get("vote_average", 0),
             "vote_count": movie_details.get("vote_count", 0),
